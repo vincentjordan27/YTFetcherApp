@@ -1,19 +1,19 @@
 # YT Fetcher Workspace
 
-Workspace ini menyatukan dua repository untuk **YT Fetcher**: aplikasi yang menemukan, melacak, dan memperbarui video YouTube paling banyak ditonton berdasarkan niche. Admin dapat mengelola keyword dan channel, menjalankan atau meninjau backfill, memantau penggunaan kuota YouTube API, serta melihat peringkat dan riwayat snapshot video.
+This workspace combines the frontend and backend of **YT Fetcher**: an application for discovering, tracking, and updating high-performing YouTube videos by niche. Administrators can manage keywords and channels, run and review backfills, monitor YouTube API quota usage, and view video rankings and snapshot history.
 
-![Diagram alur sistem YT Fetcher](be/docs/assets/yt-fetcher-system-flow.png)
+![YT Fetcher system flow](be/docs/assets/yt-fetcher-system-flow.png)
 
-## Repository
+## Repositories
 
-| Bagian | Lokasi | Peran |
+| Component | Location | Purpose |
 | --- | --- | --- |
-| Frontend | [`fe/YTNicheFetcher-FE`](fe/YTNicheFetcher-FE/README.md) | Vue 3 admin interface untuk autentikasi opsional, review channel, pengelolaan niche, backfill, kuota, ranking video, dan riwayat snapshot. |
-| Backend | [`be/YTNicheFetcher`](be/YTNicheFetcher/README.md) | ASP.NET Core API dengan PostgreSQL, proses terjadwal, integrasi YouTube, dan autentikasi Firebase opsional. |
+| Frontend | [`fe`](fe/README.md) | Vue 3 admin interface for optional authentication, channel review, niche management, backfills, quota tracking, video rankings, and snapshot history. |
+| Backend | [`be`](be/README.md) | ASP.NET Core API with PostgreSQL, scheduled processing, YouTube integration, and optional Firebase authentication. |
 
-Setiap folder tetap merupakan repository Git mandiri dan memiliki dokumentasi, konfigurasi, dependensi, serta workflow CI sendiri.
+Each directory retains its own application documentation, configuration, dependencies, and CI workflow.
 
-## Arsitektur Singkat
+## Architecture Overview
 
 ```text
 Admin (Vue frontend)
@@ -22,56 +22,55 @@ Admin (Vue frontend)
   -> YouTube Data API
 
 Niche + keyword
-  -> discovery channel
-  -> review / approval admin
-  -> video backfill yang sadar kuota
-  -> polling statistik harian + snapshot
-  -> ranking video aktif dan referensi
+  -> channel discovery
+  -> admin review / approval
+  -> quota-aware video backfill
+  -> daily statistics polling + snapshots
+  -> active and reference video rankings
 ```
 
-Backend menjalankan discovery serta pemrosesan harian melalui Hangfire. Frontend menampilkan hasil operasionalnya dan dapat memakai Google sign-in berbasis Firebase bila autentikasi diaktifkan pada backend.
+The backend runs discovery and daily processing through Hangfire. The frontend surfaces the operational results and can use Firebase-based Google sign-in when authentication is enabled on the backend.
 
-## Teknologi
+## Technology
 
-- **Frontend:** Vue 3, TypeScript, Vite, Vue Router, SCSS, dan pnpm.
-- **Backend:** .NET 10 / ASP.NET Core, Entity Framework Core, Npgsql, PostgreSQL 17, Hangfire, Serilog, dan xUnit.
-- **Infrastruktur lokal:** Docker Compose untuk PostgreSQL.
+- **Frontend:** Vue 3, TypeScript, Vite, Vue Router, SCSS, and pnpm.
+- **Backend:** .NET 10 / ASP.NET Core, Entity Framework Core, Npgsql, PostgreSQL 17, Hangfire, Serilog, and xUnit.
+- **Local infrastructure:** Docker Compose for PostgreSQL.
 
-## Mulai Development Lokal
+## Local Development
 
-1. Siapkan dan jalankan backend terlebih dahulu. Ikuti konfigurasi database serta `appsettings` pada [README backend](be/YTNicheFetcher/README.md).
+1. Prepare and run the backend first. Follow the database setup in the [backend README](be/README.md).
 
    ```powershell
-   Set-Location be/YTNicheFetcher
+   Set-Location be
    dotnet run --project .\src\YtFetcher.Api --launch-profile http
    ```
 
-2. Siapkan frontend dan atur `VITE_API_BASE_URL` pada `fe/YTNicheFetcher-FE/.env.local` agar sesuai dengan URL backend yang sedang berjalan.
+2. Prepare the frontend and set `VITE_API_BASE_URL` in its local environment file to the URL of the running backend.
 
    ```powershell
-   Set-Location ../../fe/YTNicheFetcher-FE
+   Set-Location ..\fe
    pnpm install
-   Copy-Item .env.example .env.local
    pnpm dev
    ```
 
-3. Bila autentikasi diaktifkan, konfigurasikan Firebase pada kedua aplikasi menurut README masing-masing. Jangan commit kredensial atau file konfigurasi lokal.
+3. If authentication is enabled, configure Firebase in both applications as documented in their respective READMEs. Never commit credentials or local configuration files.
 
-## Catatan Konfigurasi Penting
+## Configuration Note
 
-Dokumentasi frontend saat ini menyebut API lokal di `https://localhost:10002`, sedangkan dokumentasi backend menjalankan profil `http` pada `http://localhost:10001`. Pilih satu alamat backend yang benar untuk environment Anda, lalu samakan `VITE_API_BASE_URL` sebelum menjalankan frontend. Rincian setup dan kualitas ada di README tiap repository.
+The frontend documentation currently uses `https://localhost:10002` for the local API, while the backend `http` launch profile uses `http://localhost:10001`. Select the appropriate backend URL for your environment and use it consistently in the frontend configuration.
 
-## Perintah Kualitas
+## Quality Checks
 
-Jalankan dari repository terkait:
+Run these commands from the workspace root:
 
 ```powershell
 # Frontend
-Set-Location fe/YTNicheFetcher-FE
+Set-Location fe
 pnpm typecheck
 pnpm build
 
 # Backend
-Set-Location ../../be/YTNicheFetcher
+Set-Location ..\be
 dotnet test
 ```
