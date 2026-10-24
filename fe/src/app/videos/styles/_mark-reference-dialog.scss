@@ -1,0 +1,138 @@
+// Mark-as-reference confirmation dialog. Global (not scoped) so it can style the AppDialog shell.
+.app-dialog__surface--video-reference {
+  max-width: 460px;
+  overflow: hidden;
+}
+
+.app-dialog__surface--video-reference .app-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.app-dialog__surface--video-reference .app-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 24px;
+}
+
+.app-dialog__surface--video-reference .app-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px;
+  background: #f9f9f9;
+  border-top: 1px solid #e5e5e5;
+}
+
+.mark-reference-dialog__title {
+  margin: 0;
+  color: #0f0f0f;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.mark-reference-dialog__close {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #606060;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.mark-reference-dialog__close:hover:not(:disabled) {
+  color: #0f0f0f;
+  background: #f2f2f2;
+}
+
+.mark-reference-dialog__close:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.mark-reference-dialog__close-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.mark-reference-dialog__body {
+  margin: 0;
+  color: #0f0f0f;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.mark-reference-dialog__selection {
+  margin: 0;
+  color: #606060;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 600;
+}
+
+.mark-reference-dialog__error {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #fce8e6;
+  border-radius: 8px;
+  background: #fce8e6;
+  color: #c62828;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.mark-reference-dialog__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.mark-reference-dialog__button--secondary {
+  padding: 8px 16px;
+  border-color: #cccccc;
+  background: #fff;
+  color: #0f0f0f;
+}
+
+.mark-reference-dialog__button--secondary:hover:not(:disabled) {
+  background: #f2f2f2;
+}
+
+.mark-reference-dialog__button--primary {
+  background: #ff0033;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.mark-reference-dialog__button--primary:hover:not(:disabled) {
+  background: #cc0029;
+}
+
+.mark-reference-dialog__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

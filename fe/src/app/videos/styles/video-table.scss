@@ -1,0 +1,512 @@
+.table-panel {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+:deep(.app-data-table__scroll) {
+  overflow-x: auto;
+  width: 100%;
+}
+
+:deep(.app-data-table) {
+  width: 100%;
+  min-width: 1080px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+:deep(.app-data-table thead tr) {
+  background: #f2f2f2;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f0f0f;
+}
+
+:deep(.app-data-table th) {
+  padding: 10px 12px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+:deep(.app-data-table tbody tr) {
+  height: 72px;
+  border-bottom: 1px solid #e5e5e5;
+  font-size: 13px;
+  color: #0f0f0f;
+  transition: background-color 0.15s ease;
+}
+
+:deep(.app-data-table tbody tr:last-child) {
+  border-bottom: 0;
+}
+
+:deep(.app-data-table tbody tr:hover) {
+  background: #faf7f1;
+}
+
+:deep(.app-data-table tbody tr.row--reference) {
+  background: rgba(242, 242, 242, 0.3);
+}
+
+:deep(.app-data-table tbody td) {
+  padding: 8px 12px;
+  vertical-align: middle;
+}
+
+.video-table__thumbnail-heading, .video-table__thumbnail-cell {
+  width: 108px;
+  min-width: 108px;
+}
+
+.video-table__title-heading {
+  min-width: 260px;
+}
+
+.video-table__numeric-heading {
+  text-align: right;
+}
+
+.video-table__numeric-cell {
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.video-table__likes-cell {
+  text-align: right;
+  color: #606060;
+  font-variant-numeric: tabular-nums;
+}
+
+.video-table__muted-cell {
+  white-space: nowrap;
+  color: #606060;
+}
+
+.video-table__updated-cell {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.thumb-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.thumb-wrapper {
+  position: relative;
+  width: 80px;
+  height: 48px;
+  border-radius: 4px;
+  background: #0f0f0f;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &--dimmed {
+    opacity: 0.85;
+  }
+}
+
+.thumb-blur-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(4px);
+  opacity: 0.3;
+  transform: scale(1.1);
+}
+
+.thumb-shorts-img {
+  position: relative;
+  z-index: 10;
+  height: 100%;
+  width: 28px;
+  object-fit: cover;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.thumb-standard-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  z-index: 20;
+  border-radius: 2px;
+  padding: 1px 4px;
+  font-size: 8px;
+  font-weight: 700;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  &--shorts {
+    background: #ff0033;
+    color: #fff;
+    svg {
+      width: 9px;
+      height: 9px;
+    }
+  }
+
+  &--standard {
+    background: rgba(15, 15, 15, 0.9);
+    color: #fff;
+    font-size: 9px;
+  }
+}
+
+.thumb-hover-card {
+  display: flex;
+  position: fixed;
+  transform: translateY(-50%);
+  flex-direction: column;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  z-index: 90;
+  pointer-events: none;
+  &--shorts {
+    min-width: 140px;
+    .thumb-hover-card__img-box {
+      width: 128px;
+      height: 224px;
+    }
+  }
+
+  &--standard {
+    min-width: 200px;
+    .thumb-hover-card__img-box {
+      width: 192px;
+      height: 112px;
+    }
+  }
+
+  &__img-box {
+    border-radius: 4px;
+    overflow: hidden;
+    background: #0f0f0f;
+  }
+
+  &__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  &__meta {
+    margin-top: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0f0f0f;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__type {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    &--shorts {
+      color: #ff0033;
+      font-weight: 700;
+    }
+
+    &--standard {
+      color: #606060;
+    }
+  }
+
+  &__duration {
+    color: #909090;
+    font-size: 10px;
+  }
+}
+
+.video-cell {
+  max-width: 440px;
+  &__title-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__title {
+    max-width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 600;
+    color: #0f0f0f;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: color 0.15s ease;
+    &:hover {
+      color: #ff0033;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #ff0033;
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
+  }
+
+  &__yt-link {
+    display: inline-flex;
+    align-items: center;
+    color: #909090;
+    flex-shrink: 0;
+    text-decoration: none;
+    &:hover {
+      color: #ff0033;
+    }
+
+    .app-icon {
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  &__meta-row {
+    font-size: 11px;
+    line-height: 16px;
+    color: #606060;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+  }
+
+  &__channel-name {
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: inherit;
+    text-decoration: none;
+    &:hover {
+      color: #ff0033;
+      text-decoration: underline;
+    }
+  }
+
+  &__dot, &__id {
+    color: #909090;
+  }
+
+  &__id {
+    font-size: 11px;
+  }
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+  &--active {
+    background: #e6f3eb;
+    color: #0f7b3d;
+  }
+
+  &--reference {
+    background: #e8f0fe;
+    color: #065fd4;
+  }
+}
+
+.pagination-bar {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #e5e5e5;
+  background: #fff;
+  flex-wrap: wrap;
+  gap: 12px;
+  &__info-group {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  &__count {
+    font-size: 12px;
+    color: #606060;
+    strong {
+      font-weight: 500;
+      color: #0f0f0f;
+    }
+  }
+
+  &__rows-per-page {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  &__rows-label {
+    font-size: 12px;
+    color: #606060;
+    user-select: none;
+  }
+
+  &__select-wrap {
+    position: relative;
+    display: inline-block;
+  }
+
+  &__select {
+    height: 28px;
+    padding: 0 24px 0 8px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #0f0f0f;
+    cursor: pointer;
+    appearance: none;
+  }
+
+  &__select-arrow {
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    color: #909090;
+    pointer-events: none;
+  }
+
+  &__nav {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__nav-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #e5e5e5;
+    border-radius: 4px;
+    background: #fff;
+    color: #0f0f0f;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    &--active {
+      background: #ff0033;
+      border-color: #ff0033;
+      color: #fff;
+    }
+
+    &:disabled {
+      color: #909090;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.app-icon {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+// Clickable thumbnail: a real button so the watch popup is keyboard reachable, with the button chrome removed.
+.thumb-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  &:focus-visible {
+    outline: 2px solid #ff0033;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}
+
+// Sortable header: one <button> per sortable column, so the interaction is keyboard reachable while the
+// aria-sort state stays on the <th>.
+.video-table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  transition: color 0.15s ease;
+  &:hover {
+    color: #ff0033;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #ff0033;
+    outline-offset: 2px;
+    border-radius: 3px;
+  }
+}
+
+// One restrained caret beside the active column label.
+.video-table__sort-icon {
+  width: 0;
+  height: 0;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid currentColor;
+  border-left: 4px solid transparent;
+  &--desc {
+    border-bottom: 0;
+    border-top: 5px solid currentColor;
+  }
+}

@@ -1,0 +1,70 @@
+.app-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 4px;
+  background: #f2f2f2;
+  border: 1px solid #e5e5e5;
+  border-radius: 12px;
+}
+
+.app-tabs__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #606060;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.app-tabs__item:hover {
+  color: #0f0f0f;
+}
+
+.app-tabs__item.router-link-exact-active {
+  color: #0f0f0f;
+  background: #fff;
+  border-color: rgba(229, 229, 229, 0.8);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.app-tabs__badge {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e4e2e2;
+  color: #606060;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+}
+
+.app-tabs__item--tone-warning.router-link-exact-active .app-tabs__badge {
+  background: #fff1d6;
+  color: #a55a00;
+  font-weight: 600;
+}
+
+.app-tabs__item--tone-active.router-link-exact-active .app-tabs__badge {
+  background: #e6f3eb;
+  color: #0f7b3d;
+  font-weight: 600;
+}
+
+.app-tabs__item--tone-danger.router-link-exact-active .app-tabs__badge {
+  background: #fce8e6;
+  color: #c62828;
+  font-weight: 600;
+}
+
+.app-tabs__item--tone-info.router-link-exact-active .app-tabs__badge {
+  background: #e8f0fe;
+  color: #065fd4;
+  font-weight: 600;
+}

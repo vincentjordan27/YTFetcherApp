@@ -1,0 +1,101 @@
+.app-dialog__surface--channel-rejection-reason {
+  max-width: 500px;
+}
+
+.app-dialog__surface--channel-rejection-reason .app-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.app-dialog__surface--channel-rejection-reason .app-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+}
+
+.app-dialog__surface--channel-rejection-reason .app-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e5e5;
+  background: #f9f9f9;
+}
+
+.channel-rejection-reason-dialog__title {
+  margin: 0;
+  color: #0f0f0f;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.channel-rejection-reason-dialog__close {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #606060;
+  cursor: pointer;
+}
+
+.channel-rejection-reason-dialog__close:hover {
+  background: #f2f2f2;
+  color: #0f0f0f;
+}
+
+.channel-rejection-reason-dialog__close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.channel-rejection-reason-dialog__channel,
+.channel-rejection-reason-dialog__content {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.channel-rejection-reason-dialog__channel {
+  color: #0f0f0f;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.channel-rejection-reason-dialog__channel span {
+  color: #606060;
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.channel-rejection-reason-dialog__content {
+  white-space: pre-wrap;
+  color: #0f0f0f;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.channel-rejection-reason-dialog__button {
+  padding: 8px 16px;
+  border: 1px solid #cccccc;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f0f0f;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  cursor: pointer;
+}
+
+.channel-rejection-reason-dialog__button:hover {
+  background: #f2f2f2;
+}

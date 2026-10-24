@@ -1,0 +1,390 @@
+@use './tokens' as *;
+
+.backfill-runs-page {
+  display: flex;
+  min-height: 100vh;
+  background-color: $canvas;
+  color: $ink;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.backfill-runs-page__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.backfill-runs-page__main {
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+}
+
+.backfill-runs-page__ledger {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background-color: $surface;
+  border: 1px solid $border;
+  border-radius: 8px;
+}
+
+// The shared table chrome only supplies width/border-collapse, so this feature must align its own columns.
+// Without this block every <th> falls back to the browser default text-align: center while the data cells stay
+// left aligned, which is what made the header and the column bodies disagree.
+.backfill-runs-page .app-data-table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  text-align: left;
+
+  thead tr {
+    background-color: $surface-soft;
+    border-bottom: 1px solid $border;
+  }
+
+  th {
+    padding: 10px 16px;
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    color: $ink;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 8px 16px;
+    font-size: 13px;
+    line-height: 20px;
+    color: $ink;
+    vertical-align: middle;
+  }
+}
+
+.backfill-runs-page__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid $border;
+}
+
+.backfill-runs-page__search-input,
+.backfill-runs-page__filter-select,
+.backfill-runs-page__filter-date,
+.backfill-runs-page__page-size-select {
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid $border-strong;
+  border-radius: 4px;
+  background-color: $surface;
+  color: $ink;
+  font: inherit;
+  font-size: 13px;
+
+  &:focus-visible {
+    outline: 2px solid $youtube;
+    outline-offset: 1px;
+  }
+}
+
+.backfill-runs-page__search-input {
+  min-width: 260px;
+}
+
+.backfill-runs-page__toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.backfill-runs-page__filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: $ink-muted;
+  font-size: 13px;
+}
+
+.backfill-runs-page__divider {
+  width: 1px;
+  height: 20px;
+  background-color: $border;
+}
+
+.backfill-runs-page__btn-refresh,
+.backfill-runs-page__btn-retry {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid $border-strong;
+  border-radius: 4px;
+  background-color: $surface;
+  color: $ink;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:disabled {
+    color: $ink-subtle;
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $youtube;
+    outline-offset: 1px;
+  }
+}
+
+.backfill-runs-page__btn-retry {
+  border-color: $youtube;
+  color: $youtube;
+  font-weight: 500;
+}
+
+.backfill-runs-page__row {
+  height: 56px;
+  border-top: 1px solid $border;
+  cursor: default;
+
+  &--failed {
+    cursor: pointer;
+
+    &:hover {
+      background-color: $surface-row-hover;
+    }
+  }
+}
+
+// A normal table cell keeps the row's padding and vertical alignment; the two lines are block children. A
+// flex container on the <td> itself would drop the cell out of the table layout.
+.backfill-runs-page__cell-channel {
+  vertical-align: middle;
+}
+
+.backfill-runs-page__channel-name {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $youtube;
+    outline-offset: 2px;
+  }
+}
+
+.backfill-runs-page__channel-id {
+  display: block;
+  color: $ink-subtle;
+  font-size: 12px;
+}
+
+.backfill-runs-page__cell-action {
+  text-align: right;
+}
+
+.backfill-runs-page__cell-error {
+  max-width: 280px;
+  color: $ink-muted;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.backfill-runs-page__status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+
+  &--running {
+    background-color: $info-soft;
+    color: $info;
+  }
+
+  &--succeeded {
+    background-color: $active-soft;
+    color: $active;
+  }
+
+  &--failed {
+    background-color: $danger-soft;
+    color: $danger;
+  }
+
+  &--abandoned {
+    background-color: $warning-soft;
+    color: $warning;
+  }
+}
+
+// Must out-specify the page-level `td` padding above so the loading/empty/error cell keeps its own spacing.
+.backfill-runs-page .app-data-table td.backfill-runs-page__state-cell {
+  padding: 24px;
+  text-align: center;
+}
+
+.backfill-runs-page__state-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: $ink-subtle;
+  font-size: 13px;
+}
+
+.backfill-runs-page__state-indicator {
+  width: 12px;
+  height: 12px;
+  border: 2px solid $border-strong;
+  border-top-color: $youtube;
+  border-radius: 50%;
+  animation: backfill-runs-spin 0.8s linear infinite;
+}
+
+@keyframes backfill-runs-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.backfill-runs-page__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid $border;
+}
+
+.backfill-runs-page__pagination-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: $ink-muted;
+  font-size: 13px;
+}
+
+.backfill-runs-page__page-size {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.backfill-runs-page__dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.backfill-runs-page__dialog-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.backfill-runs-page__dialog-close {
+  border: 0;
+  background: none;
+  color: $ink-muted;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.backfill-runs-page__dialog-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.backfill-runs-page__dialog-text {
+  margin: 0;
+  color: $ink;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.backfill-runs-page__dialog-error {
+  margin: 0;
+  color: $danger;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.backfill-runs-page__detail-list {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px 16px;
+  margin: 0;
+
+  dt {
+    color: $ink-subtle;
+    font-size: 13px;
+  }
+
+  dd {
+    margin: 0;
+    color: $ink;
+    font-size: 13px;
+  }
+}
+
+.backfill-runs-page__detail-reason {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background-color: $canvas;
+  border: 1px solid $border;
+  border-radius: 8px;
+}
+
+.backfill-runs-page__detail-reason-label {
+  color: $ink-subtle;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.backfill-runs-page__detail-reason-text {
+  margin: 0;
+  color: $ink;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+// A provider quota limit is a distinct, expected status and must not look like a generic failure.
+.backfill-runs-page__status-pill--quota {
+  background: #fff4e5;
+  color: #b26a00;
+}

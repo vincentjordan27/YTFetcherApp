@@ -1,0 +1,73 @@
+.channel-backfill-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #606060;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.channel-backfill-status__icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: #909090;
+}
+
+.channel-backfill-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.channel-backfill-status-pill__icon {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+.channel-backfill-status-pill--completed {
+  background: #e6f3eb;
+  color: #0f7b3d;
+}
+
+.channel-backfill-status-pill--running {
+  background: #e8f0fe;
+  color: #065fd4;
+}
+
+.channel-backfill-status-pill--scheduling {
+  background: #ece9fb;
+  color: #5b3fd6;
+}
+
+.channel-backfill-status-pill--failed {
+  border: 0;
+  background: #fdecea;
+  color: #b3261e;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.channel-backfill-status-pill--failed:hover {
+  background: #fbdad5;
+}
+
+.channel-backfill-status-pill--scheduling-failed {
+  border: 0;
+  background: #fff4e5;
+  color: #9a5b00;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.channel-backfill-status-pill--scheduling-failed:hover {
+  background: #ffe8cc;
+}

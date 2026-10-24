@@ -1,0 +1,44 @@
+.app-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+
+.app-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(2px);
+  cursor: default;
+}
+
+.app-dialog__surface {
+  position: relative;
+  width: min(100%, 500px);
+  max-height: calc(100vh - 2rem);
+  overflow: auto;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  box-shadow: 0 18px 48px rgba(37, 33, 29, 0.18);
+  box-sizing: border-box;
+}
+
+.app-dialog__header {
+  padding: 24px 24px 16px;
+}
+
+.app-dialog__body {
+  padding: 24px;
+}
+
+.app-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 24px 24px;
+}

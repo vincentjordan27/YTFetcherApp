@@ -1,0 +1,34 @@
+.channel-review-toolbar { display: flex; flex-direction: column; gap: 8px; justify-content: space-between; }
+.channel-review-toolbar__tabs { width: fit-content; padding: 4px; background: #f2f2f2; border: 1px solid #e5e5e5; border-radius: 12px; }
+.channel-review-toolbar__tabs.app-tabs { gap: 0; }
+.channel-review-toolbar__tabs :deep(.app-tabs__item) { min-height: 34px; padding: 6px 16px; border: 1px solid transparent; border-radius: 8px; font-size: 12px; font-weight: 600; gap: 8px; color: #606060; }
+.channel-review-toolbar__tabs :deep(.app-tabs__item.router-link-exact-active) { background: #fff; border-color: #e5e5e5; color: #0f0f0f; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+.channel-review-toolbar__filters { display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; gap: 8px; }
+.channel-review-toolbar__search { position: relative; min-width: 0; grid-column: 1 / -1; }
+.channel-review-toolbar__search-icon { position: absolute; top: 50%; left: 10px; width: 18px; height: 18px; color: #909090; transform: translateY(-50%); pointer-events: none; }
+.channel-review-toolbar__search-input { width: 100%; height: 38px; padding: 0 16px 0 36px; border: 1px solid #e5e5e5; border-radius: 12px; background: #fff; box-sizing: border-box; font: inherit; font-size: 13px; }
+.channel-review-toolbar__search-input:focus { outline: none; border-color: #ff0033; }
+.channel-review-toolbar__add { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px; border: 1px solid transparent; border-radius: 12px; background: #ff0033; color: #fff; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: background-color 0.15s ease; }
+.channel-review-toolbar__add:hover { background: #cc0029; }
+.channel-review-toolbar__add-icon { width: 16px; height: 16px; }
+.channel-review-toolbar__review-menu { position: relative; justify-self: start; }
+.channel-review-toolbar__selection-action { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border: 1px solid #d8d8d8; border-radius: 8px; background: #fff; color: #0f0f0f; font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.channel-review-toolbar__selection-action:hover, .channel-review-toolbar__selection-action[aria-expanded='true'] { background: #f8f8f8; border-color: #bdbdbd; }
+.channel-review-toolbar__selection-count { min-width: 18px; padding: 1px 5px; border-radius: 9px; background: currentColor; color: #fff; font-size: 11px; line-height: 16px; text-align: center; }
+.channel-review-toolbar__menu-icon { width: 16px; height: 16px; color: #606060; }
+.channel-review-toolbar__selection-menu { position: absolute; z-index: 20; top: calc(100% + 6px); right: 0; display: flex; min-width: 176px; flex-direction: column; padding: 4px; border: 1px solid #e5e5e5; border-radius: 8px; background: #fff; box-shadow: 0 10px 25px rgba(0,0,0,.12); }
+.channel-review-toolbar__selection-menu-item { display: flex; width: 100%; align-items: center; padding: 8px 12px; border: 0; border-radius: 6px; background: transparent; color: #0f0f0f; font: inherit; font-size: 13px; line-height: 20px; font-weight: 500; text-align: left; cursor: pointer; }
+.channel-review-toolbar__selection-menu-item:hover, .channel-review-toolbar__selection-menu-item:focus-visible { background: #f2f2f2; outline: none; }
+.channel-review-toolbar__selection-menu-item--reject { color: #c62828; }
+@media (min-width: 740px) {
+  .channel-review-toolbar__filters--with-add { grid-template-columns: minmax(220px, 1fr) max-content; }
+  .channel-review-toolbar__filters--with-review { grid-template-columns: minmax(220px, 1fr) max-content; }
+  .channel-review-toolbar__filters--with-add.channel-review-toolbar__filters--with-review { grid-template-columns: minmax(220px, 1fr) max-content max-content; }
+  .channel-review-toolbar__search { grid-column: auto; }
+}
+@media (min-width: 1140px) {
+  .channel-review-toolbar { flex-direction: row; align-items: center; }
+  .channel-review-toolbar__filters--with-add { grid-template-columns: 320px max-content; }
+  .channel-review-toolbar__filters--with-review { grid-template-columns: 320px max-content; }
+  .channel-review-toolbar__filters--with-add.channel-review-toolbar__filters--with-review { grid-template-columns: 320px max-content max-content; }
+}

@@ -1,0 +1,305 @@
+// Channel approve / reject dialog. Global (not scoped) so it can style the shared AppDialog shell.
+.app-dialog__surface--channel {
+  max-width: 500px;
+  overflow: hidden;
+}
+
+.app-dialog__surface--channel .app-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.app-dialog__surface--channel .app-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+}
+
+.app-dialog__surface--channel .app-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px;
+  background: #f9f9f9;
+  border-top: 1px solid #e5e5e5;
+}
+
+.channel-action-dialog__heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.channel-action-dialog__icon {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.channel-action-dialog__icon--approve {
+  background: #e6f3eb;
+  color: #0f7b3d;
+}
+
+.channel-action-dialog__icon--reject {
+  background: #fce8e6;
+  color: #c62828;
+}
+
+.channel-action-dialog__icon-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.channel-action-dialog__title {
+  margin: 0;
+  color: #0f0f0f;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.channel-action-dialog__close {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #606060;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.channel-action-dialog__close:hover:not(:disabled) {
+  color: #0f0f0f;
+  background: #f2f2f2;
+}
+
+.channel-action-dialog__close:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.channel-action-dialog__close-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.channel-action-dialog__target {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+}
+
+.channel-action-dialog__target-icon {
+  display: flex;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cccccc;
+  border-radius: 50%;
+  background: #f2f2f2;
+  color: #ff0033;
+}
+
+.channel-action-dialog__target-icon-svg {
+  width: 22px;
+  height: 22px;
+}
+
+.channel-action-dialog__target-meta {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.channel-action-dialog__target-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.channel-action-dialog__target-name {
+  overflow: hidden;
+  color: #0f0f0f;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.channel-action-dialog__target-handle {
+  color: #606060;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.channel-action-dialog__target-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  color: #909090;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.channel-action-dialog__target-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0f7b3d;
+}
+
+.channel-action-dialog__consequence {
+  margin: 0;
+  color: #0f0f0f;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.channel-action-dialog__reason {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.channel-action-dialog__reason-label {
+  color: #0f0f0f;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+
+.channel-action-dialog__reason-input {
+  width: 100%;
+  min-height: 72px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  resize: vertical;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #0f0f0f;
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.channel-action-dialog__reason-input::placeholder {
+  color: #909090;
+}
+
+.channel-action-dialog__reason-input:focus {
+  outline: none;
+  border-color: #ff0033;
+  box-shadow: 0 0 0 1px rgba(255, 0, 51, 0.3);
+}
+
+.channel-action-dialog__error {
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid #fce8e6;
+  border-radius: 8px;
+  background: #fce8e6;
+  color: #c62828;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.channel-action-dialog__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.channel-action-dialog__button-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.channel-action-dialog__button--secondary {
+  padding: 8px 16px;
+  border-color: #cccccc;
+  background: #fff;
+  color: #0f0f0f;
+}
+
+.channel-action-dialog__button--secondary:hover:not(:disabled) {
+  background: #f2f2f2;
+}
+
+.channel-action-dialog__button--approve {
+  background: #ff0033;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.channel-action-dialog__button--approve:hover:not(:disabled) {
+  background: #cc0029;
+}
+
+.channel-action-dialog__button--reject {
+  background: #c62828;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.channel-action-dialog__button--reject:hover:not(:disabled) {
+  background: #a71d1d;
+}
+
+.channel-action-dialog__button:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.channel-action-dialog__spinner {
+  animation: channel-action-dialog-spin 0.8s linear infinite;
+}
+
+@keyframes channel-action-dialog-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

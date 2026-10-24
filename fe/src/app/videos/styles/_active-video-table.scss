@@ -1,0 +1,154 @@
+.active-video-state-row__cell {
+  padding: 32px 24px !important;
+  text-align: center;
+}
+
+.active-video-state-row__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #606060;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.active-video-state-row__content--busy {
+  color: #606060;
+}
+
+.active-video-state-row__indicator {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border: 2px solid #e5e5e5;
+  border-top-color: #ff0033;
+  border-radius: 50%;
+  animation: active-video-state-row-spin 0.7s linear infinite;
+}
+
+.active-video-state-row__message {
+  font-weight: 500;
+}
+
+.active-video-state-row__action {
+  padding: 6px 12px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #0f0f0f;
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.active-video-state-row__action:hover {
+  border-color: #cccccc;
+  background: #f2f2f2;
+}
+
+// A video row can exist without a thumbnail URL; the server never manufactures one.
+.thumb-wrapper--empty {
+  background: linear-gradient(100deg, #f2f2f2 30%, #e5e5e5 50%, #f2f2f2 70%);
+  background-size: 200% 100%;
+  animation: active-video-thumb-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes active-video-state-row-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes active-video-thumb-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+// Reference-selection column and toolbar command for the live Active tab.
+.video-table__select-heading,
+.video-table__select-cell {
+  width: 44px;
+  min-width: 44px;
+  text-align: center;
+}
+
+.video-table__action-heading,
+.video-table__action-cell {
+  width: 52px;
+  min-width: 52px;
+  text-align: center;
+}
+
+.video-table__select-checkbox {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #ff0033;
+  cursor: pointer;
+}
+
+.video-table__select-checkbox:focus-visible {
+  outline: 2px solid #ff0033;
+  outline-offset: 2px;
+}
+
+:deep(.app-data-table tbody tr.video-table__row--selected) {
+  background: #faf7f1;
+}
+
+.toolbar__mark {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: #ff0033;
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.toolbar__mark:hover:not(:disabled) {
+  background: #cc0029;
+}
+
+.toolbar__mark:disabled {
+  background: #f2f2f2;
+  color: #909090;
+  cursor: not-allowed;
+}
+
+.toolbar__mark-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.toolbar__mark-count {
+  display: inline-flex;
+  min-width: 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0 5px;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.toolbar__mark:disabled .toolbar__mark-count {
+  background: #e5e5e5;
+  color: #606060;
+}

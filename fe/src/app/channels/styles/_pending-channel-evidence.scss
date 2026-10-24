@@ -1,0 +1,206 @@
+.pending-channel-evidence__cell {
+  padding: 0 !important;
+}
+
+.pending-channel-evidence__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #fcfbfa;
+  border-left: 4px solid #ff0033;
+  border-top: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.pending-channel-evidence__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.pending-channel-evidence__source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f0f0f;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+}
+
+.pending-channel-evidence__source-icon {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: #ff0033;
+}
+
+.pending-channel-evidence__keyword {
+  display: inline-block;
+  margin: 0 4px;
+  padding: 2px 6px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  background: #fff;
+  color: #bb0022;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pending-channel-evidence__dot {
+  margin: 0 4px;
+}
+
+.pending-channel-evidence__caption {
+  color: #606060;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.pending-channel-evidence__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.pending-channel-evidence__card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pending-channel-evidence__card:hover {
+  border-color: #cccccc;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.pending-channel-evidence__card:hover .pending-channel-evidence__thumb img {
+  transform: scale(1.05);
+}
+
+.pending-channel-evidence__thumb {
+  position: relative;
+  width: 100%;
+  height: 150px;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  background: #0f0f0f;
+}
+
+.pending-channel-evidence__thumb--loading::after {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: linear-gradient(100deg, #efeded 28%, #fafafa 45%, #efeded 62%);
+  background-size: 240% 100%;
+  animation: evidence-thumbnail-shimmer 1.3s ease-in-out infinite;
+  content: '';
+}
+
+.pending-channel-evidence__thumb--loading img {
+  opacity: 0;
+}
+
+.pending-channel-evidence__thumb img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.2s ease;
+}
+
+@keyframes evidence-thumbnail-shimmer {
+  to {
+    background-position: -140% 0;
+  }
+}
+
+.pending-channel-evidence__message {
+  margin: 0;
+  color: #606060;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.pending-channel-evidence__title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #0f0f0f;
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 600;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.pending-channel-evidence__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px solid #e5e5e5;
+}
+
+.pending-channel-evidence__date {
+  color: #909090;
+  font-size: 10px;
+}
+
+.pending-channel-evidence__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  color: #065fd4;
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.pending-channel-evidence__link:hover {
+  text-decoration: underline;
+}
+
+.pending-channel-evidence__link-icon {
+  width: 12px;
+  height: 12px;
+}
+
+@media (min-width: 640px) {
+  .pending-channel-evidence__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .pending-channel-evidence__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .pending-channel-evidence__grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .pending-channel-evidence__panel {
+    padding: 16px;
+  }
+}

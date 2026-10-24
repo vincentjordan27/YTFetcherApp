@@ -1,0 +1,99 @@
+// In-app Shorts watch popup. Global (not scoped) so it can style the AppDialog shell it reuses.
+// The player is the official YouTube embed: no custom controls, no overlay, no second dialog framework.
+.app-dialog__surface--video-preview {
+  width: min(94vw, 440px);
+  max-width: 440px;
+  overflow: hidden;
+}
+
+.app-dialog__surface--video-preview .app-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.app-dialog__surface--video-preview .app-dialog__body {
+  padding: 16px 20px 20px;
+}
+
+// The popup has no actions: closing is the backdrop tap and Escape, which AppDialog already owns.
+.app-dialog__surface--video-preview .app-dialog__actions {
+  display: none;
+}
+
+.shorts-preview__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shorts-preview__title {
+  margin: 0;
+  color: #0f0f0f;
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+}
+
+.shorts-preview__context {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+}
+
+.shorts-preview__video-title {
+  overflow: hidden;
+  color: #0f0f0f;
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.shorts-preview__channel {
+  color: #606060;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.shorts-preview__stage {
+  display: flex;
+  justify-content: center;
+}
+
+// 9:16 stays stable, never smaller than the 200px YouTube requires, and never taller than the viewport
+// allows. The width follows the height cap so the ratio is never stretched.
+.shorts-preview__frame {
+  position: relative;
+  width: min(100%, calc(min(70vh, 620px) * 9 / 16));
+  min-width: 200px;
+  min-height: 200px;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #000;
+}
+
+.shorts-preview__player {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.shorts-preview__unavailable {
+  margin: 0;
+  padding: 24px 8px;
+  color: #606060;
+  font-size: 13px;
+  line-height: 19px;
+  text-align: center;
+}

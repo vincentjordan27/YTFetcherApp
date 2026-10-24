@@ -1,0 +1,32 @@
+.pending-channels, .approved-channels, .rejected-channels {
+  min-height: 100%;
+  padding: 32px 24px 24px;
+  background: #f9f9f9;
+  color: #0f0f0f;
+  box-sizing: border-box;
+}
+
+.pending-channels__container, .approved-channels__container, .rejected-channels__container {
+  display: flex;
+  width: 100%;
+  max-width: 1720px;
+  margin: 0 auto;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pending-channels__title, .approved-channels__title, .rejected-channels__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .pending-channels, .approved-channels, .rejected-channels {
+    padding: 20px 16px 16px;
+  }
+}

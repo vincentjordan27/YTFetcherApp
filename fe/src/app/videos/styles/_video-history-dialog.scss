@@ -1,0 +1,170 @@
+// On-demand per-video snapshot history dialog. Global (not scoped) so it can style the AppDialog shell.
+.app-dialog__surface--video-history {
+  max-width: 520px;
+  overflow: hidden;
+}
+
+.app-dialog__surface--video-history .app-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.app-dialog__surface--video-history .app-dialog__body {
+  display: flex;
+  flex-direction: column;
+  min-height: 180px;
+  padding: 20px 24px;
+}
+
+.app-dialog__surface--video-history .app-dialog__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  background: #f9f9f9;
+  border-top: 1px solid #e5e5e5;
+}
+
+.video-history-dialog__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.video-history-dialog__title {
+  margin: 0;
+  color: #0f0f0f;
+  font-size: 20px;
+  line-height: 28px;
+  font-weight: 600;
+}
+
+.video-history-dialog__context {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-width: 0;
+}
+
+.video-history-dialog__video-title {
+  overflow: hidden;
+  color: #0f0f0f;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.video-history-dialog__channel {
+  color: #606060;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.video-history-dialog__close {
+  display: flex;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #606060;
+  cursor: pointer;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.video-history-dialog__close:hover {
+  color: #0f0f0f;
+  background: #f2f2f2;
+}
+
+.video-history-dialog__close-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.video-history-dialog__feedback {
+  margin: 0;
+  color: #606060;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.video-history-dialog__feedback--error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid #fce8e6;
+  border-radius: 8px;
+  background: #fce8e6;
+  color: #c62828;
+  font-weight: 500;
+}
+
+.video-history-dialog__retry {
+  padding: 4px 12px;
+  border: 1px solid #c62828;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #c62828;
+  font: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.video-history-dialog__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.video-history-dialog__table th {
+  padding: 8px 12px;
+  border-bottom: 1px solid #e5e5e5;
+  color: #606060;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.video-history-dialog__table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f2f2f2;
+  color: #0f0f0f;
+  font-variant-numeric: tabular-nums;
+}
+
+.video-history-dialog__numeric {
+  text-align: right;
+}
+
+.video-history-dialog__footer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.video-history-dialog__summary {
+  color: #606060;
+  font-size: 12px;
+  line-height: 18px;
+}

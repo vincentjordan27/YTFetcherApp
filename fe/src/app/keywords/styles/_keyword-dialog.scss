@@ -1,0 +1,56 @@
+@use './tokens' as *;
+
+.keyword-icon { width: 16px; height: 16px; flex: none; }
+
+.app-dialog__surface--keyword-add { max-width: 460px; border-radius: 8px; box-shadow: 0 18px 48px rgba(37, 33, 29, 0.18); }
+.app-dialog__surface--keyword-disable { max-width: 440px; border-radius: 8px; box-shadow: 0 18px 48px rgba(37, 33, 29, 0.18); }
+.app-dialog__surface--keyword-delete { max-width: 500px; padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 18px 48px rgba(37, 33, 29, 0.18); }
+.app-dialog__surface--keyword-add .app-dialog__header, .app-dialog__surface--keyword-delete .app-dialog__header { padding: 24px 24px 0; }
+.app-dialog__surface--keyword-add .app-dialog__body { padding: 16px 24px 24px; }
+.app-dialog__surface--keyword-add .app-dialog__actions, .app-dialog__surface--keyword-delete .app-dialog__actions { padding: 16px 24px 24px; border-top: 1px solid $border; }
+.app-dialog__surface--keyword-disable .app-dialog__body { padding: 24px; }
+.app-dialog__surface--keyword-disable .app-dialog__actions { padding: 16px 24px 24px; border-top: 1px solid $border; }
+.app-dialog__surface--keyword-delete .app-dialog__body { padding: 0; }
+
+.keyword-dialog__header-content { display: flex; align-items: center; justify-content: space-between; padding-bottom: 8px; border-bottom: 1px solid $border; }
+.keyword-dialog__heading { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.keyword-dialog__heading-icon { width: 20px; height: 20px; color: $youtube; }
+.keyword-dialog__title { margin: 0; color: $ink; font-size: 16px; line-height: 24px; font-weight: 600; }
+.keyword-dialog__close { display: flex; align-items: center; justify-content: center; padding: 4px; border: 0; border-radius: 2px; background: transparent; color: $ink-subtle; cursor: pointer; }
+.keyword-dialog__close:hover { color: $ink; background: $surface-soft; }
+.keyword-dialog__close:focus-visible, .keyword-dialog__button:focus-visible { outline: 2px solid $youtube; outline-offset: 2px; }
+.keyword-dialog__form { display: flex; flex-direction: column; }
+.keyword-dialog__field-label { display: block; margin-bottom: 4px; color: $ink; font-size: 12px; line-height: 16px; font-weight: 600; }
+.keyword-dialog__field { position: relative; }
+.keyword-dialog__field-icon { position: absolute; left: 10px; top: 11px; width: 18px; height: 18px; color: $ink-subtle; pointer-events: none; }
+.keyword-dialog__field-input { width: 100%; height: 40px; padding: 0 12px 0 36px; box-sizing: border-box; background: $surface; border: 1px solid $border; border-radius: 2px; color: $ink; font: inherit; font-size: 13px; line-height: 20px; }
+.keyword-dialog__field-input::placeholder { color: $ink-subtle; }
+.keyword-dialog__field-input:focus { outline: none; border-color: $youtube; box-shadow: 0 0 0 1px rgba(255, 0, 51, 0.3); }
+.keyword-dialog__field-help { margin: 6px 0 0; color: $ink-muted; font-size: 12px; line-height: 18px; }
+.keyword-dialog__button { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 16px; border-radius: 2px; font: inherit; font-size: 14px; line-height: 20px; font-weight: 600; white-space: nowrap; cursor: pointer; }
+.keyword-dialog__button--cancel { border: 1px solid $border-strong; background: $surface; color: $ink; }
+.keyword-dialog__button--cancel:hover { background: $surface-soft; }
+.keyword-dialog__button--primary { border: 0; background: $youtube; color: $surface; }
+.keyword-dialog__button--primary:hover { background: $youtube-dark; }
+.keyword-dialog__button--danger { border: 0; background: $danger; color: $surface; }
+.keyword-dialog__button--danger:hover { background: #a71d1d; }
+.keyword-dialog__confirm-lead { display: flex; align-items: flex-start; gap: 14px; }
+.keyword-dialog__confirm-icon { width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: $danger-soft; color: $danger; }
+.keyword-dialog__confirm-copy { display: flex; flex-direction: column; min-width: 0; }
+.keyword-dialog__confirm-text { margin: 0; color: $ink-muted; font-size: 14px; line-height: 22px; }
+.keyword-dialog__confirm-target { margin-top: 10px; padding: 8px; background: $surface-soft; border: 1px solid $border; border-radius: 2px; color: $ink; font-size: 12px; line-height: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.keyword-dialog__confirm-target-value { color: $youtube; font-weight: 600; }
+.keyword-dialog__delete-header { display: flex; align-items: center; justify-content: space-between; padding: 24px 24px 16px; border-bottom: 1px solid $border; }
+.keyword-dialog__delete-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.keyword-dialog__delete-icon { width: 32px; height: 32px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: $danger-soft; color: $danger; }
+.keyword-dialog__delete-body { display: flex; flex-direction: column; gap: 16px; padding: 24px; }
+.keyword-dialog__delete-target { display: flex; align-items: center; gap: 12px; padding: 12px; background: $canvas; border: 1px solid $border; border-radius: 8px; }
+.keyword-dialog__delete-target-icon { width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 50%; background: $surface-soft; border: 1px solid $border-strong; color: $youtube; }
+.keyword-dialog__delete-target-meta { display: flex; flex-direction: column; min-width: 0; }
+.keyword-dialog__delete-target-name { color: $ink; font-size: 14px; line-height: 20px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.keyword-dialog__delete-target-status { display: flex; align-items: center; gap: 6px; margin-top: 2px; color: $ink-subtle; font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.keyword-dialog__delete-target-dot { width: 6px; height: 6px; border-radius: 50%; background: $active; }
+.keyword-dialog__delete-consequence { margin: 0; color: $ink; font-size: 14px; line-height: 22px; }
+.app-dialog__surface--keyword-delete .app-dialog__actions { justify-content: flex-end; padding: 16px 24px; background: $canvas; border-top: 1px solid $border; }
+
+.keyword-dialog__error { margin: 0; color: $danger; font-size: 13px; line-height: 20px; }

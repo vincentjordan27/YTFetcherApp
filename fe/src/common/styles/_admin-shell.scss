@@ -1,0 +1,14 @@
+.admin-shell {
+  min-height: 100vh;
+}
+
+.admin-shell__content {
+  min-width: 0;
+  padding-left: 68px;
+}
+
+@media (max-width: 767px) {
+  .admin-shell__content {
+    padding-bottom: 64px;
+  }
+}

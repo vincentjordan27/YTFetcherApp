@@ -1,0 +1,9 @@
+bin/
+obj/
+TestResults/
+.vs/
+*.user
+*.suo
+src/YtFetcher.Api/appsettings.json
+logs/
+src/YtFetcher.Api/logs/

@@ -1,0 +1,86 @@
+@use './tokens' as *;
+
+// Page shell
+// ===========================================================================
+.keywords-page {
+  display: flex;
+  min-height: 100vh;
+  background-color: $canvas;
+  color: $ink;
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.keywords-page__title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.keywords-page__main {
+  flex: 1;
+  min-width: 0;
+  padding: 24px;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    padding: 16px;
+  }
+}
+
+.keywords-page__container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+// ===========================================================================
+// Section: quota awareness banner
+// ===========================================================================
+.keywords-page__banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px;
+  background-color: $surface;
+  border: 1px solid $border;
+  border-radius: 8px;
+}
+
+.keywords-page__banner-icon {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  margin-top: 2px;
+  color: $info;
+}
+
+.keywords-page__banner-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.keywords-page__banner-title {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: $ink;
+}
+
+.keywords-page__banner-text {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 18px;
+  color: $ink-muted;
+}
+
+// ===========================================================================
