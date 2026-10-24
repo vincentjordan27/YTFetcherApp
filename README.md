@@ -2,7 +2,7 @@
 
 Workspace ini menyatukan dua repository untuk **YT Fetcher**: aplikasi yang menemukan, melacak, dan memperbarui video YouTube paling banyak ditonton berdasarkan niche. Admin dapat mengelola keyword dan channel, menjalankan atau meninjau backfill, memantau penggunaan kuota YouTube API, serta melihat peringkat dan riwayat snapshot video.
 
-![Diagram alur sistem YT Fetcher](be/YTNicheFetcher/docs/assets/yt-fetcher-system-flow.png)
+![Diagram alur sistem YT Fetcher](be/docs/assets/yt-fetcher-system-flow.png)
 
 ## Repository
 
