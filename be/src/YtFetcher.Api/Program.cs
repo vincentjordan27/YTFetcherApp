@@ -115,22 +115,19 @@ if (authenticationConfiguration.AuthenticationEnabled)
     app.UseMiddleware<FrontendOriginGuardMiddleware>();
 }
 
-// Local development only: the Hangfire Dashboard is a manual operator tool.
-if (HangfireDashboardMapping.ShouldMap(app.Environment))
+var hangfireDashboardEnabled = builder.Configuration.GetValue<bool>("Hangfire:Dashboard:Enabled");
+
+// Mapping is an explicit operator choice. Authentication, when enabled, adds a session requirement below.
+if (HangfireDashboardMapping.ShouldMap(hangfireDashboardEnabled))
 {
     if (authenticationConfiguration.AuthenticationEnabled)
     {
-        // The dashboard is still local-only; with authentication enabled it additionally requires the session
-        // cookie. Hangfire's own server-side actions are exempt from the frontend-origin check.
         app.UseHangfireDashboard(
             HangfireDashboardMapping.Path,
             new DashboardOptions
             {
                 Authorization =
-                [
-                    new LocalRequestsOnlyAuthorizationFilter(),
-                    new HangfireDashboardAuthorizationFilter(app.Services.GetRequiredService<IHttpContextAccessor>())
-                ]
+                [new HangfireDashboardAuthorizationFilter(app.Services.GetRequiredService<IHttpContextAccessor>())]
             });
     }
     else
@@ -160,21 +157,23 @@ app.MapDiscoveryKeywordEndpoints();
 app.MapVideoEndpoints();
 app.MapUsageEndpoints();
 
-app.Services.GetRequiredService<IRecurringJobManager>().AddOrUpdate<ChannelDiscoveryHangfireJob>(
-    recurringJobId: "channel-discovery",
-    methodCall: job => job.RunAsync(CancellationToken.None),
-    cronExpression: Cron.Daily(0, 5),
-    options: new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-
-// One ordered daily job owns ledger setup, tracked-video statistics, quota finalization and gate opening,
-// and one bounded channel dispatch pass, all in the Pacific quota timezone.
+// The quota ledger starts at 00:01 Pacific. Discovery follows at 01:00 Pacific, after the daily job
+// has initialized the new quota window.
 var quotaTimeZone = PacificQuotaWindow.TimeZone;
 var recurringJobs = app.Services.GetRequiredService<IRecurringJobManager>();
 
+recurringJobs.AddOrUpdate<ChannelDiscoveryHangfireJob>(
+    recurringJobId: "channel-discovery",
+    methodCall: job => job.RunAsync(CancellationToken.None),
+    cronExpression: Cron.Daily(1, 0),
+    options: new RecurringJobOptions { TimeZone = quotaTimeZone });
+
+// One ordered daily job owns ledger setup, tracked-video statistics, quota finalization and gate opening,
+// and one bounded channel dispatch pass, all in the Pacific quota timezone.
 recurringJobs.AddOrUpdate<DailyProcessingHangfireJob>(
     recurringJobId: "daily-processing",
     methodCall: job => job.RunAsync(CancellationToken.None),
-    cronExpression: Cron.Daily(1, 0),
+    cronExpression: Cron.Daily(0, 1),
     options: new RecurringJobOptions { TimeZone = quotaTimeZone });
 
 // The two replaced ids are dropped explicitly, so an environment that already registered them does not keep

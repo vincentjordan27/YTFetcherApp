@@ -29,17 +29,17 @@ public class HangfireHostRegistrationTests
             factory.RecurringJobs.Registrations,
             candidate => candidate.RecurringJobId == "channel-discovery");
         Assert.Equal("channel-discovery", registration.RecurringJobId);
-        Assert.Equal("5 0 * * *", registration.CronExpression);
-        Assert.Equal(TimeZoneInfo.Utc, registration.TimeZone);
+        Assert.Equal("0 1 * * *", registration.CronExpression);
+        Assert.Equal(PacificQuotaWindow.TimeZone, registration.TimeZone);
         Assert.Equal(typeof(ChannelDiscoveryHangfireJob).FullName, registration.JobType);
         Assert.Equal(nameof(ChannelDiscoveryHangfireJob.RunAsync), registration.MethodName);
 
         // One registration owns ledger setup, statistics polling, quota finalization/gate opening, and the
-        // bounded dispatch pass, in the Pacific quota timezone at 01:00.
+        // bounded dispatch pass, in the Pacific quota timezone at 00:01.
         var dailyProcessing = Assert.Single(
             factory.RecurringJobs.Registrations,
             candidate => candidate.RecurringJobId == "daily-processing");
-        Assert.Equal("0 1 * * *", dailyProcessing.CronExpression);
+        Assert.Equal("1 0 * * *", dailyProcessing.CronExpression);
         Assert.Equal(PacificQuotaWindow.TimeZone, dailyProcessing.TimeZone);
         Assert.Equal(typeof(DailyProcessingHangfireJob).FullName, dailyProcessing.JobType);
         Assert.Equal(nameof(DailyProcessingHangfireJob.RunAsync), dailyProcessing.MethodName);

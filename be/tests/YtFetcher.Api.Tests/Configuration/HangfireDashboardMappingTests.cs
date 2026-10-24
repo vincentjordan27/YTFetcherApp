@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Hosting.Internal;
 using YtFetcher.Api.Configuration;
 
 namespace YtFetcher.Api.Tests.Configuration;
@@ -7,20 +5,14 @@ namespace YtFetcher.Api.Tests.Configuration;
 public class HangfireDashboardMappingTests
 {
     [Fact]
-    public void Dashboard_is_mapped_in_development()
+    public void Dashboard_is_mapped_when_explicitly_enabled()
     {
-        Assert.True(HangfireDashboardMapping.ShouldMap(Environment(Environments.Development)));
+        Assert.True(HangfireDashboardMapping.ShouldMap(dashboardEnabled: true));
     }
 
-    [Theory]
-    [InlineData("Production")]
-    [InlineData("Staging")]
-    [InlineData("")]
-    public void Dashboard_is_not_mapped_outside_development(string environmentName)
+    [Fact]
+    public void Dashboard_is_not_mapped_when_disabled()
     {
-        Assert.False(HangfireDashboardMapping.ShouldMap(Environment(environmentName)));
+        Assert.False(HangfireDashboardMapping.ShouldMap(dashboardEnabled: false));
     }
-
-    private static IHostEnvironment Environment(string environmentName) =>
-        new HostingEnvironment { EnvironmentName = environmentName };
 }
