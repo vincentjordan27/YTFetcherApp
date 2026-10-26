@@ -1,0 +1,60 @@
+name: yt-fetcher
+
+services:
+  api:
+    build:
+      context: ./be
+    image: yt-fetcher-api:latest
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      Database__Host: ${DATABASE_HOST:?DATABASE_HOST is required}
+      Database__Port: ${DATABASE_PORT:-5432}
+      Database__Name: ${DATABASE_NAME:?DATABASE_NAME is required}
+      Database__Username: ${DATABASE_USERNAME:?DATABASE_USERNAME is required}
+      Database__Password: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required}
+      Auth__Enabled: ${AUTH_ENABLED:-false}
+      Auth__FrontendOrigin: ${AUTH_FRONTEND_ORIGIN:-}
+      Auth__Jwt__Issuer: ${AUTH_JWT_ISSUER:-}
+      Auth__Jwt__Audience: ${AUTH_JWT_AUDIENCE:-}
+      Auth__Jwt__SigningKey: ${AUTH_JWT_SIGNING_KEY:-}
+      Auth__Jwt__SessionLifetimeMinutes: ${AUTH_JWT_SESSION_LIFETIME_MINUTES:-480}
+      Auth__Firebase__ProjectId: ${AUTH_FIREBASE_PROJECT_ID:-}
+      Auth__Firebase__ServiceAccountFilePath: /run/secrets/firebase-admin-sdk.json
+      Hangfire__Dashboard__Enabled: ${HANGFIRE_DASHBOARD_ENABLED:-false}
+      Grafana__LokiUrl: ${GRAFANA_LOKI_URL:-}
+      Grafana__Username: ${GRAFANA_USERNAME:-}
+      Grafana__Token: ${GRAFANA_TOKEN:-}
+      YouTube__ApiKey: ${YOUTUBE_API_KEY:?YOUTUBE_API_KEY is required}
+      YouTube__QueriesDailyQuotaLimit: ${YOUTUBE_QUERIES_DAILY_QUOTA_LIMIT:-10000}
+      YouTube__VideoBatchGetStatsDailyQuotaLimit: ${YOUTUBE_VIDEO_BATCH_STATS_DAILY_QUOTA_LIMIT:-10000}
+      YouTube__SearchQueriesDailyQuotaLimit: ${YOUTUBE_SEARCH_QUERIES_DAILY_QUOTA_LIMIT:-100}
+      YouTube__DiscoveryMaxPagesPerKeywordPerRun: ${YOUTUBE_DISCOVERY_MAX_PAGES:-1}
+      YouTube__MaxDailyApprovedChannels: ${YOUTUBE_MAX_DAILY_APPROVED_CHANNELS:-100}
+      YouTube__BackfillPageLimit: ${YOUTUBE_BACKFILL_PAGE_LIMIT:-3}
+      YouTube__BackfillDispatchBatchSize: ${YOUTUBE_BACKFILL_DISPATCH_BATCH_SIZE:-10}
+    volumes:
+      - ${FIREBASE_ADMIN_SDK_PATH:-/dev/null}:/run/secrets/firebase-admin-sdk.json:ro
+    networks:
+      - default
+      - database
+  frontend:
+    build:
+      context: ./fe
+      args:
+        VITE_FIREBASE_API_KEY: ${VITE_FIREBASE_API_KEY:-}
+        VITE_FIREBASE_AUTH_DOMAIN: ${VITE_FIREBASE_AUTH_DOMAIN:-}
+        VITE_FIREBASE_PROJECT_ID: ${VITE_FIREBASE_PROJECT_ID:-}
+        VITE_FIREBASE_APP_ID: ${VITE_FIREBASE_APP_ID:-}
+    image: yt-fetcher-frontend:latest
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "127.0.0.1:10000:8080"
+
+networks:
+  database:
+    external: true
+    name: ${DATABASE_NETWORK:?DATABASE_NETWORK is required}

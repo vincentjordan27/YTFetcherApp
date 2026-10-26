@@ -1,7 +1,7 @@
 import type { AppTabItem } from '@/common/components/AppTabs.vue'
 
 export const designAppShell = {
-  version: 'V2.4',
+  version: 'V1.0',
   operator: {
     initials: 'ER',
     name: 'Elena Rostova',

@@ -1,7 +1,0 @@
-# Build scripts of transitive dependencies are intentionally not executed: the web Firebase SDK is consumed
-# as published browser code, and the ignored scripts only build native watcher binaries and generate a CLI
-# bundle that this project never runs.
-allowBuilds:
-  '@firebase/util': false
-  '@parcel/watcher': false
-  protobufjs: false

@@ -11,14 +11,14 @@ Vue 3 admin interface for YT Fetcher. It provides the operational screens for re
 ## Stack
 
 - Vue 3, TypeScript, Vite, Vue Router, and SCSS
-- `pnpm` for packages
+- `npm` for packages
 
 ## Local Setup
 
 ```powershell
-pnpm install
+npm ci
 Copy-Item .env.example .env.local
-pnpm dev
+npm run dev
 ```
 
 Vite starts locally at `https://localhost:5173` using a development-only self-signed certificate. The browser may
@@ -86,8 +86,8 @@ Keep feature-specific code inside `src/app/<module>`. Move code into `src/common
 ## Quality Checks
 
 ```powershell
-pnpm typecheck
-pnpm build
+npm run typecheck
+npm run build
 ```
 
 GitHub Actions runs these checks for pushes and pull requests targeting `main`.

@@ -33,7 +33,7 @@ The backend runs discovery and daily processing through Hangfire. The frontend s
 
 ## Technology
 
-- **Frontend:** Vue 3, TypeScript, Vite, Vue Router, SCSS, and pnpm.
+- **Frontend:** Vue 3, TypeScript, Vite, Vue Router, SCSS, and npm.
 - **Backend:** .NET 10 / ASP.NET Core, Entity Framework Core, Npgsql, PostgreSQL 17, Hangfire, Serilog, and xUnit.
 - **Local infrastructure:** Docker Compose for PostgreSQL.
 
@@ -50,8 +50,8 @@ The backend runs discovery and daily processing through Hangfire. The frontend s
 
    ```powershell
    Set-Location ..\fe
-   pnpm install
-   pnpm dev
+   npm ci
+   npm run dev
    ```
 
 3. If authentication is enabled, configure Firebase in both applications as documented in their respective READMEs. Never commit credentials or local configuration files.
@@ -67,8 +67,8 @@ Run these commands from the workspace root:
 ```powershell
 # Frontend
 Set-Location fe
-pnpm typecheck
-pnpm build
+npm run typecheck
+npm run build
 
 # Backend
 Set-Location ..\be

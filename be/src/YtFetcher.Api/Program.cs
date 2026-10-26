@@ -132,7 +132,9 @@ if (HangfireDashboardMapping.ShouldMap(hangfireDashboardEnabled))
     }
     else
     {
-        app.UseHangfireDashboard(HangfireDashboardMapping.Path);
+        app.UseHangfireDashboard(
+            HangfireDashboardMapping.Path,
+            new DashboardOptions { Authorization = [] });
     }
 }
 

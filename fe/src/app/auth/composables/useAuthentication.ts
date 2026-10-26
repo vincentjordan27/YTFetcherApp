@@ -137,15 +137,11 @@ async function requestGoogleIdToken(): Promise<string> {
   const app = getApps().length > 0
     ? getApp()
     : initializeApp({
-        apiKey,
-        authDomain,
-        projectId,
-        appId,
-        // Optional values are omitted rather than sent as null, because Firebase treats null as invalid.
-        ...(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID?.trim()
-          ? { messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID.trim() }
-          : {}),
-      })
+      apiKey,
+      authDomain,
+      projectId,
+      appId,
+    })
 
   const credential = await signInWithPopup(getAuth(app), new GoogleAuthProvider())
 

@@ -1,0 +1,8 @@
+.git
+.github
+**/bin
+**/obj
+TestResults
+tests
+appsettings*.json
+*.user
