@@ -2,12 +2,6 @@ import type { AppTabItem } from '@/common/components/AppTabs.vue'
 
 export const designAppShell = {
   version: 'V1.0',
-  operator: {
-    initials: 'ER',
-    name: 'Elena Rostova',
-    email: 'operator@ytfetcher.local',
-    role: 'Ops SuperAdmin',
-  },
   navigation: [
     { id: 'videos', label: 'Videos', to: '/videos/active' },
     { id: 'channels', label: 'Channels', to: '/channels/pending' },
