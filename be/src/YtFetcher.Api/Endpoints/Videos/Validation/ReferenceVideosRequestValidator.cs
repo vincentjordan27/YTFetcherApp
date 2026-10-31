@@ -23,7 +23,7 @@ public sealed class ReferenceVideosRequestValidator : AbstractValidator<Referenc
 
         RuleFor(request => request.SortBy)
             .Must(value => value is null || Enum.GetNames<VideoListSortBy>().Contains(value, StringComparer.OrdinalIgnoreCase))
-            .WithMessage("sortBy must be one of: title, views, likes, publishedAt, lastUpdatedAt.")
+            .WithMessage("sortBy must be one of: title, views, likes, publishedAt, lastUpdatedAt, referenceSetAt.")
             .OverridePropertyName("sortBy");
 
         RuleFor(request => request.SortDirection)

@@ -2,7 +2,7 @@
  * Server-side sort contract shared by the Active and Reference video lists. Both routes accept exactly these
  * fields and directions; nothing here sorts rows in the browser.
  */
-export type VideoSortField = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt'
+export type VideoSortField = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt' | 'referenceSetAt'
 
 export type VideoSortDirection = 'asc' | 'desc'
 

@@ -278,6 +278,7 @@ CREATE TABLE videos (
     current_views BIGINT NOT NULL DEFAULT 0,
     current_likes BIGINT NOT NULL DEFAULT 0,
     is_reference BOOLEAN NOT NULL DEFAULT FALSE,
+    is_reference_used BOOLEAN NOT NULL DEFAULT TRUE,
     reference_set_by_user_id UUID NULL,
     reference_set_at TIMESTAMPTZ NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
@@ -321,6 +322,11 @@ CREATE INDEX ix_videos_stats_due
     WHERE is_deleted = FALSE
       AND is_reference = FALSE
       AND tracking_status = 'ACTIVE';
+
+CREATE INDEX ix_videos_reference_recent
+    ON videos ((reference_set_at IS NULL), reference_set_at DESC, id DESC)
+    WHERE is_deleted = FALSE
+      AND is_reference = TRUE;
 
 CREATE TABLE video_snapshots (
     id BIGSERIAL PRIMARY KEY,

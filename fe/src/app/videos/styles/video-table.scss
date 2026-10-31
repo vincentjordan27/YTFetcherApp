@@ -351,6 +351,16 @@
     background: #e8f0fe;
     color: #065fd4;
   }
+
+  &--used {
+    background: #e6f3eb;
+    color: #0f7b3d;
+  }
+
+  &--unused {
+    background: #f4f4f4;
+    color: #606060;
+  }
 }
 
 .pagination-bar {

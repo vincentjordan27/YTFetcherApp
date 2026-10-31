@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
 
-const props = withDefaults(defineProps<{ label: string; markable?: boolean; removable?: boolean; busy?: boolean }>(), {
+const props = withDefaults(defineProps<{ label: string; markable?: boolean; removable?: boolean; referenceUsed?: boolean; busy?: boolean }>(), {
   markable: false,
   removable: false,
   busy: false,
 })
 
-const emit = defineEmits<{ history: []; mark: []; remove: [] }>()
+const emit = defineEmits<{ history: []; mark: []; remove: []; 'toggle-reference-used': [] }>()
 
 const PANEL_WIDTH = 168
 const PANEL_MARGIN = 8
@@ -56,6 +56,11 @@ function selectMark(): void {
 function selectRemove(): void {
   close()
   emit('remove')
+}
+
+function selectToggleReferenceUsed(): void {
+  close()
+  emit('toggle-reference-used')
 }
 
 function handlePointerDown(event: PointerEvent): void {
@@ -117,6 +122,15 @@ onBeforeUnmount(() => {
         </button>
         <button type="button" class="video-row-menu__item" role="menuitem" @click="selectHistory">
           History
+        </button>
+        <button
+          v-if="props.referenceUsed !== undefined"
+          type="button"
+          class="video-row-menu__item"
+          role="menuitem"
+          @click="selectToggleReferenceUsed"
+        >
+          {{ props.referenceUsed ? 'Mark as unused' : 'Mark as used' }}
         </button>
         <button
           v-if="props.removable"

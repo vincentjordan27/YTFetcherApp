@@ -26,7 +26,7 @@ public sealed class VideoUseCase(
         CancellationToken cancellationToken)
     {
         var searchText = NormalizeSearchText(request.SearchText);
-        var (sortBy, sortDirection) = ResolveSort(request.SortBy, request.SortDirection);
+        var (sortBy, sortDirection) = ResolveSort(request.SortBy, request.SortDirection, DefaultSortBy);
 
         // The repository returns Core entities plus the joined channel fields; building the response
         // is an Application concern.
@@ -52,7 +52,10 @@ public sealed class VideoUseCase(
         CancellationToken cancellationToken)
     {
         var searchText = NormalizeSearchText(request.SearchText);
-        var (sortBy, sortDirection) = ResolveSort(request.SortBy, request.SortDirection);
+        var (sortBy, sortDirection) = ResolveSort(
+            request.SortBy,
+            request.SortDirection,
+            VideoListSortBy.ReferenceSetAt);
 
         var rows = await videoRepository.GetReferencePageAsync(
             request.Page,
@@ -118,15 +121,26 @@ public sealed class VideoUseCase(
             timeProvider.GetUtcNow(),
             cancellationToken);
 
+    public Task<bool> SetReferenceUsedAsync(
+        SetVideoReferenceUsedRequest request,
+        CancellationToken cancellationToken) =>
+        videoRepository.TrySetReferenceUsedAsync(
+            request.VideoId,
+            request.IsUsed!.Value,
+            currentActor.UserId,
+            timeProvider.GetUtcNow(),
+            cancellationToken);
+
     /// <summary>
     /// Turns the validated wire strings into the shared sort contract. An absent value falls back to the
     /// documented default; the transport validator has already rejected unknown names.
     /// </summary>
     private static (VideoListSortBy SortBy, VideoListSortDirection SortDirection) ResolveSort(
         string? sortBy,
-        string? sortDirection) =>
+        string? sortDirection,
+        VideoListSortBy defaultSortBy) =>
         (
-            ParseSortValue(sortBy, DefaultSortBy),
+            ParseSortValue(sortBy, defaultSortBy),
             ParseSortValue(sortDirection, DefaultSortDirection)
         );
 

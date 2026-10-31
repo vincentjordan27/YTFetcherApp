@@ -7,6 +7,7 @@ const SORT_FIELD_LABELS: Readonly<Record<VideoSortField, string>> = {
   likes: 'Likes',
   publishedAt: 'Published',
   lastUpdatedAt: 'Last update',
+  referenceSetAt: 'Reference date',
 }
 
 /** Header-visible short label used by the informational toolbar value, e.g. `Published (Asc)`. */
@@ -16,6 +17,7 @@ const SORT_SHORT_LABELS: Readonly<Record<VideoSortField, string>> = {
   likes: 'Likes',
   publishedAt: 'Published',
   lastUpdatedAt: 'Last update',
+  referenceSetAt: 'Reference date',
 }
 
 const DIRECTION_LABELS: Readonly<Record<VideoSortDirection, string>> = {

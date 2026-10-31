@@ -1,7 +1,7 @@
 /** Wire contracts for the active-video list action `POST /api/videos/active/list`. */
 
 /** Sort columns the active list accepts; mirrors the server contract exactly. */
-export type ActiveVideosSortBy = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt'
+export type ActiveVideosSortBy = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt' | 'referenceSetAt'
 
 export type ActiveVideosSortDirection = 'asc' | 'desc'
 

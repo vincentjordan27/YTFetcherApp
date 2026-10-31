@@ -175,6 +175,18 @@ public class VideoUseCaseTests
     }
 
     [Fact]
+    public async Task Reference_page_defaults_to_the_most_recent_reference_first()
+    {
+        var repository = new FakeVideoRepository();
+        var useCase = CreateUseCase(repository);
+
+        await useCase.GetReferenceAsync(new ReferenceVideosRequest(1, 10, null, null, null), CancellationToken.None);
+
+        Assert.Equal(VideoListSortBy.ReferenceSetAt, repository.ReceivedReferenceSortBy);
+        Assert.Equal(VideoListSortDirection.Desc, repository.ReceivedReferenceSortDirection);
+    }
+
+    [Fact]
     public async Task Mark_as_reference_forwards_the_ids_and_clock_and_returns_the_repository_outcome()
     {
         var repository = new FakeVideoRepository { MarkResult = true };
@@ -232,6 +244,24 @@ public class VideoUseCaseTests
             CancellationToken.None);
 
         Assert.False(removed);
+    }
+
+    [Fact]
+    public async Task Set_reference_used_forwards_the_new_value_actor_and_clock()
+    {
+        var repository = new FakeVideoRepository { SetReferenceUsedResult = true };
+        var useCase = CreateUseCase(repository);
+        var videoId = Guid.NewGuid();
+
+        var updated = await useCase.SetReferenceUsedAsync(
+            new SetVideoReferenceUsedRequest(videoId, true),
+            CancellationToken.None);
+
+        Assert.True(updated);
+        Assert.Equal(videoId, repository.ReceivedSetReferenceUsedVideoId);
+        Assert.Equal(true, repository.ReceivedSetReferenceUsedValue);
+        Assert.Equal(ActorUserId, repository.ReceivedSetReferenceUsedActorUserId);
+        Assert.Equal(Now, repository.ReceivedSetReferenceUsedUtcNow);
     }
 
     [Fact]
@@ -342,6 +372,8 @@ public class VideoUseCaseTests
 
         public bool RemoveResult { get; init; }
 
+        public bool SetReferenceUsedResult { get; init; }
+
         public int? ReceivedPage { get; private set; }
 
         public int? ReceivedPageSize { get; private set; }
@@ -373,6 +405,14 @@ public class VideoUseCaseTests
         public DateTimeOffset? ReceivedRemoveUtcNow { get; private set; }
 
         public Guid? ReceivedRemoveActorUserId { get; private set; }
+
+        public Guid? ReceivedSetReferenceUsedVideoId { get; private set; }
+
+        public bool? ReceivedSetReferenceUsedValue { get; private set; }
+
+        public DateTimeOffset? ReceivedSetReferenceUsedUtcNow { get; private set; }
+
+        public Guid? ReceivedSetReferenceUsedActorUserId { get; private set; }
 
         public (bool Exists, int TotalCount, IReadOnlyList<VideoSnapshot> Snapshots) HistoryResult { get; set; } =
             (false, 0, []);
@@ -453,6 +493,21 @@ public class VideoUseCaseTests
             ReceivedRemoveUtcNow = utcNow;
 
             return Task.FromResult(RemoveResult);
+        }
+
+        public Task<bool> TrySetReferenceUsedAsync(
+            Guid videoId,
+            bool isUsed,
+            Guid actorUserId,
+            DateTimeOffset utcNow,
+            CancellationToken cancellationToken)
+        {
+            ReceivedSetReferenceUsedVideoId = videoId;
+            ReceivedSetReferenceUsedValue = isUsed;
+            ReceivedSetReferenceUsedActorUserId = actorUserId;
+            ReceivedSetReferenceUsedUtcNow = utcNow;
+
+            return Task.FromResult(SetReferenceUsedResult);
         }
 
         public Task<(bool Exists, int TotalCount, IReadOnlyList<VideoSnapshot> Snapshots)> GetSnapshotHistoryPageAsync(

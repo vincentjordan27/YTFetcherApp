@@ -19,7 +19,9 @@ public sealed record ReferenceVideoDto(
     long CurrentViews,
     long CurrentLikes,
     DateTimeOffset PublishedAt,
-    DateTimeOffset? LastStatsFetchedAt)
+    DateTimeOffset? LastStatsFetchedAt,
+    bool IsReferenceUsed,
+    DateTimeOffset? ReferenceSetAt)
 {
     public static ReferenceVideoDto ToDto(Video video, string channelName, string youtubeChannelId) => new(
         video.Id,
@@ -32,5 +34,7 @@ public sealed record ReferenceVideoDto(
         video.CurrentViews,
         video.CurrentLikes,
         video.PublishedAt,
-        video.LastStatsFetchedAt);
+        video.LastStatsFetchedAt,
+        video.IsReferenceUsed,
+        video.ReferenceSetAt);
 }

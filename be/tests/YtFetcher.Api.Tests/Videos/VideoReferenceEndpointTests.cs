@@ -40,6 +40,7 @@ public class VideoReferenceEndpointTests
         Assert.All(stored, video =>
         {
             Assert.True(video.IsReference);
+            Assert.True(video.IsReferenceUsed);
             Assert.Equal(VideoTrackingStatus.STOPPED, video.TrackingStatus);
         });
     }
@@ -132,6 +133,66 @@ public class VideoReferenceEndpointTests
         Assert.Equal(310, item.GetProperty("currentLikes").GetInt64());
         Assert.NotEqual(default, item.GetProperty("publishedAt").GetDateTimeOffset());
         Assert.NotEqual(default, item.GetProperty("lastStatsFetchedAt").GetDateTimeOffset());
+        Assert.True(item.GetProperty("isReferenceUsed").GetBoolean());
+        Assert.NotEqual(default, item.GetProperty("referenceSetAt").GetDateTimeOffset());
+    }
+
+    [Fact]
+    public async Task Reference_list_defaults_to_most_recent_reference_first()
+    {
+        using var factory = new ChannelApiFactory();
+        using var hostConfiguration = new HostConfigurationScope();
+        using var application = factory.WithWebHostBuilder(_ => { });
+        var older = await SeedVideoAsync(application, "v-older", "Older", isReference: true, referenceSetAt: Now.AddDays(-2));
+        var newer = await SeedVideoAsync(application, "v-newer", "Newer", isReference: true, referenceSetAt: Now.AddDays(-1));
+        using var client = application.CreateClient();
+
+        var response = await client.PostAsJsonAsync(
+            "/api/videos/reference/list",
+            new { page = 1, pageSize = 10, searchText = (string?)null });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var ids = document.RootElement.GetProperty("items").EnumerateArray()
+            .Select(item => item.GetProperty("id").GetGuid())
+            .ToList();
+
+        Assert.Equal([newer, older], ids);
+    }
+
+    [Fact]
+    public async Task Set_reference_used_updates_the_current_usage_flag()
+    {
+        using var factory = new ChannelApiFactory();
+        using var hostConfiguration = new HostConfigurationScope();
+        using var application = factory.WithWebHostBuilder(_ => { });
+        var videoId = await SeedVideoAsync(application, "v-reference", "Saved clip", isReference: true);
+        using var client = application.CreateClient();
+
+        var markUsed = await client.PostAsJsonAsync("/api/videos/reference/set-used", new { videoId, isUsed = true });
+        var markUnused = await client.PostAsJsonAsync("/api/videos/reference/set-used", new { videoId, isUsed = false });
+
+        Assert.Equal(HttpStatusCode.NoContent, markUsed.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, markUnused.StatusCode);
+        var stored = Assert.Single(await ReadVideosAsync(application, videoId));
+        Assert.True(stored.IsReference);
+        Assert.False(stored.IsReferenceUsed);
+    }
+
+    [Fact]
+    public async Task Set_reference_used_returns_404_for_a_non_reference_video()
+    {
+        using var factory = new ChannelApiFactory();
+        using var hostConfiguration = new HostConfigurationScope();
+        using var application = factory.WithWebHostBuilder(_ => { });
+        var videoId = await SeedVideoAsync(application, "v-active", "Active clip");
+        using var client = application.CreateClient();
+
+        var response = await client.PostAsJsonAsync("/api/videos/reference/set-used", new { videoId, isUsed = true });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var stored = Assert.Single(await ReadVideosAsync(application, videoId));
+        Assert.False(stored.IsReferenceUsed);
     }
 
     [Fact]
@@ -272,7 +333,7 @@ public class VideoReferenceEndpointTests
         await SeedVideoAsync(application, "v-1", "One", isReference: true);
         using var client = application.CreateClient();
 
-        foreach (var field in new[] { "title", "views", "likes", "publishedAt", "lastUpdatedAt" })
+        foreach (var field in new[] { "title", "views", "likes", "publishedAt", "lastUpdatedAt", "referenceSetAt" })
         {
             foreach (var direction in new[] { "asc", "desc" })
             {
@@ -301,7 +362,8 @@ public class VideoReferenceEndpointTests
         string youtubeVideoId,
         string title,
         bool isReference = false,
-        VideoTrackingStatus trackingStatus = VideoTrackingStatus.ACTIVE)
+        VideoTrackingStatus trackingStatus = VideoTrackingStatus.ACTIVE,
+        DateTimeOffset? referenceSetAt = null)
     {
         using var scope = application.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<YtFetcherDbContext>();
@@ -333,6 +395,8 @@ public class VideoReferenceEndpointTests
             CurrentViews = 4_200,
             CurrentLikes = 310,
             IsReference = isReference,
+            IsReferenceUsed = isReference,
+            ReferenceSetAt = isReference ? referenceSetAt ?? Now : null,
             TrackingStatus = isReference ? VideoTrackingStatus.STOPPED : trackingStatus,
             LastStatsFetchedAt = Now,
             IsDeleted = false,

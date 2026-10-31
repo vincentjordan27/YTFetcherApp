@@ -36,6 +36,7 @@ public class VideoReferenceDomainTests
         video.MarkAsReference(Now, actorUserId);
 
         Assert.True(video.IsReference);
+        Assert.True(video.IsReferenceUsed);
         Assert.Equal(Now, video.ReferenceSetAt);
         Assert.Equal(actorUserId, video.ReferenceSetByUserId);
         Assert.Equal(VideoTrackingStatus.STOPPED, video.TrackingStatus);
@@ -68,11 +69,13 @@ public class VideoReferenceDomainTests
     public void Remove_reference_returns_a_young_video_to_active_and_preserves_counts_and_history()
     {
         var video = CreateReferenceVideo(publishedAt: Now.AddDays(-(Video.MatureAgeDays - 1)), views: 10_000_000);
+        video.IsReferenceUsed = true;
 
         var removed = video.RemoveReference(Now, Guid.NewGuid());
 
         Assert.True(removed);
         Assert.False(video.IsReference);
+        Assert.False(video.IsReferenceUsed);
         Assert.Null(video.ReferenceSetAt);
         Assert.Null(video.ReferenceSetByUserId);
 
@@ -124,6 +127,37 @@ public class VideoReferenceDomainTests
         // Nothing moved: the row keeps its own state and timestamp.
         Assert.False(video.IsReference);
         Assert.Equal(VideoTrackingStatus.STOPPED, video.TrackingStatus);
+        Assert.Equal(modifiedBefore, video.ModifiedAt);
+    }
+
+    [Fact]
+    public void Set_reference_used_updates_only_usage_and_modified_audit_fields()
+    {
+        var video = CreateReferenceVideo(Now.AddDays(-1), 100);
+        var actorUserId = Guid.NewGuid();
+
+        var changed = video.SetReferenceUsed(true, Now, actorUserId);
+
+        Assert.True(changed);
+        Assert.True(video.IsReference);
+        Assert.True(video.IsReferenceUsed);
+        Assert.Equal(Now, video.ModifiedAt);
+        Assert.Equal(actorUserId, video.ModifiedByUserId);
+        Assert.Equal(Now.AddDays(-1), video.ReferenceSetAt);
+        Assert.Equal(VideoTrackingStatus.STOPPED, video.TrackingStatus);
+    }
+
+    [Fact]
+    public void Set_reference_used_refuses_a_non_reference_without_mutation()
+    {
+        var video = CreateReferenceVideo(Now.AddDays(-1), 100);
+        video.IsReference = false;
+        var modifiedBefore = video.ModifiedAt;
+
+        var changed = video.SetReferenceUsed(true, Now, Guid.NewGuid());
+
+        Assert.False(changed);
+        Assert.False(video.IsReferenceUsed);
         Assert.Equal(modifiedBefore, video.ModifiedAt);
     }
 

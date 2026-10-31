@@ -1,7 +1,7 @@
 /** Wire contracts for the reference-video list action `POST /api/videos/reference/list`. */
 
 /** Sort columns the reference list accepts; mirrors the server contract exactly. */
-export type ReferenceVideosSortBy = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt'
+export type ReferenceVideosSortBy = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt' | 'referenceSetAt'
 
 export type ReferenceVideosSortDirection = 'asc' | 'desc'
 
@@ -45,4 +45,6 @@ export interface ReferenceVideoItem {
   readonly publishedAt: string
   /** ISO 8601 timestamp with an offset, or null. */
   readonly lastStatsFetchedAt: string | null
+  readonly isReferenceUsed: boolean
+  readonly referenceSetAt: string | null
 }

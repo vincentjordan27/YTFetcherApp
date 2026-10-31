@@ -29,6 +29,8 @@ const {
   retry,
   removeReference,
   removePending,
+  toggleReferenceUsage,
+  usagePending,
 } = useReferenceVideos()
 
 // Navigation only: the tab counts have no endpoint yet, so no badge is fabricated.
@@ -70,6 +72,7 @@ function openPreview(row: ReferenceVideoRow): void {
       :sort="sort"
       :sort-label="sortLabel"
       :remove-pending="removePending"
+      :usage-pending="usagePending"
       @update:search-query="updateSearchInput"
       @update:rows-per-page="updateRowsPerPage"
       @update:page="goToPage"
@@ -78,6 +81,7 @@ function openPreview(row: ReferenceVideoRow): void {
       @open-history="openHistory"
       @open-preview="openPreview"
       @remove-reference="removeReference"
+      @toggle-reference-used="toggleReferenceUsage"
     />
     <VideoHistoryDialog
       :open="history.open.value"

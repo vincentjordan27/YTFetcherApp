@@ -61,6 +61,9 @@ public sealed class Video : AuditableEntity
     [Column("is_reference")]
     public bool IsReference { get; set; }
 
+    [Column("is_reference_used")]
+    public bool IsReferenceUsed { get; set; }
+
     [Column("reference_set_by_user_id", TypeName = "uuid")]
     public Guid? ReferenceSetByUserId { get; set; }
 
@@ -167,6 +170,7 @@ public sealed class Video : AuditableEntity
     public void MarkAsReference(DateTimeOffset utcNow, Guid actorUserId)
     {
         IsReference = true;
+        IsReferenceUsed = true;
         ReferenceSetAt = utcNow;
         ReferenceSetByUserId = actorUserId;
         TrackingStatus = VideoTrackingStatus.STOPPED;
@@ -195,12 +199,26 @@ public sealed class Video : AuditableEntity
         }
 
         IsReference = false;
+        IsReferenceUsed = false;
         ReferenceSetAt = null;
         ReferenceSetByUserId = null;
 
         var isMatureAndPopular = PublishedAt <= utcNow.AddDays(-MatureAgeDays) && CurrentViews >= MatureViewCount;
         TrackingStatus = isMatureAndPopular ? VideoTrackingStatus.STOPPED : VideoTrackingStatus.ACTIVE;
 
+        ModifiedAt = utcNow;
+        ModifiedByUserId = actorUserId;
+        return true;
+    }
+
+    public bool SetReferenceUsed(bool isUsed, DateTimeOffset utcNow, Guid actorUserId)
+    {
+        if (!IsReference)
+        {
+            return false;
+        }
+
+        IsReferenceUsed = isUsed;
         ModifiedAt = utcNow;
         ModifiedByUserId = actorUserId;
         return true;

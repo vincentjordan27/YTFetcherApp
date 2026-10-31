@@ -7,6 +7,7 @@ import type {
 } from '@/app/videos/api/types/active-videos'
 import type { MarkVideosReferenceBody } from '@/app/videos/api/types/mark-videos-reference'
 import type { UnmarkVideoReferenceBody } from '@/app/videos/api/types/unmark-video-reference'
+import type { SetVideoReferenceUsedBody } from '@/app/videos/api/types/set-video-reference-used'
 import type {
   ReferenceVideosListBody,
   ReferenceVideosRequest,
@@ -67,6 +68,16 @@ export function unmarkVideoReference(videoId: string): Promise<void> {
   const body: UnmarkVideoReferenceBody = { videoId }
 
   return apiRequest<void>('/api/videos/unmark-reference', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+/** Sets the current Used/Unused flag without removing the video from Reference. */
+export function setReferenceVideoUsed(videoId: string, isUsed: boolean): Promise<void> {
+  const body: SetVideoReferenceUsedBody = { videoId, isUsed }
+
+  return apiRequest<void>('/api/videos/reference/set-used', {
     method: 'POST',
     body: JSON.stringify(body),
   })

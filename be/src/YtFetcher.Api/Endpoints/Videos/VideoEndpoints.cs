@@ -73,6 +73,27 @@ public static class VideoEndpoints
                     title: "Reference video not found");
         });
 
+        videos.MapPost("/reference/set-used", async (
+            [FromBody] SetVideoReferenceUsedRequest request,
+            IValidator<SetVideoReferenceUsedRequest> validator,
+            IVideoUseCase videoUseCase,
+            CancellationToken cancellationToken) =>
+        {
+            var validation = await validator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+            {
+                return Results.ValidationProblem(validation.ToDictionary());
+            }
+
+            var updated = await videoUseCase.SetReferenceUsedAsync(request, cancellationToken);
+            return updated
+                ? Results.NoContent()
+                : Results.Problem(
+                    detail: "This video is no longer in the reference list. Refresh the list and try again.",
+                    statusCode: StatusCodes.Status404NotFound,
+                    title: "Reference video not found");
+        });
+
         videos.MapPost("/reference/list", async (
             [FromBody] ReferenceVideosRequest request,
             IValidator<ReferenceVideosRequest> validator,

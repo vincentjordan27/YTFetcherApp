@@ -25,6 +25,7 @@ const props = defineProps<{
   sort: VideoSort
   sortLabel: string
   removePending: boolean
+  usagePending: boolean
 }>()
 
 const emit = defineEmits<{
@@ -35,11 +36,12 @@ const emit = defineEmits<{
   'open-history': [row: ReferenceVideoRow]
   'open-preview': [row: ReferenceVideoRow]
   'remove-reference': [row: ReferenceVideoRow]
+  'toggle-reference-used': [row: ReferenceVideoRow]
   'set-sort': [field: VideoSortField]
 }>()
 
-/** Thumbnail, title, views, likes, published, age, last update, status, row actions. */
-const COLUMN_COUNT = 9
+/** Thumbnail, title, views, likes, published, age, last update, reference date, usage, row actions. */
+const COLUMN_COUNT = 10
 
 const showRows = () => props.state === 'ready'
 
@@ -141,7 +143,13 @@ function channelUrl(youtubeChannelId: string): string {
                     <span v-if="props.sort.field === 'lastUpdatedAt'" class="video-table__sort-icon" :class="{ 'video-table__sort-icon--desc': props.sort.direction === 'desc' }" aria-hidden="true"></span>
                   </button>
                 </th>
-                <th>Status</th>
+                <th :aria-sort="toAriaSort(props.sort, 'referenceSetAt')">
+                  <button type="button" class="video-table__sort" :aria-label="toVideoSortAriaLabel('referenceSetAt')" @click="emit('set-sort', 'referenceSetAt')">
+                    Reference date
+                    <span v-if="props.sort.field === 'referenceSetAt'" class="video-table__sort-icon" :class="{ 'video-table__sort-icon--desc': props.sort.direction === 'desc' }" aria-hidden="true"></span>
+                  </button>
+                </th>
+                <th>Usage</th>
                 <th class="video-table__action-heading"><span class="sr-only">Actions</span></th>
               </tr>
             </template>
@@ -222,13 +230,20 @@ function channelUrl(youtubeChannelId: string): string {
               <td class="video-table__muted-cell">{{ row.publishedLabel }}</td>
               <td class="video-table__muted-cell">{{ row.ageLabel }}</td>
               <td class="video-table__updated-cell">{{ row.lastStatsFetchedLabel }}</td>
-              <td><span class="status-badge status-badge--reference">Reference</span></td>
+              <td class="video-table__updated-cell">{{ row.referenceSetLabel }}</td>
+              <td>
+                <span class="status-badge" :class="row.isReferenceUsed ? 'status-badge--used' : 'status-badge--unused'">
+                  {{ row.isReferenceUsed ? 'Used' : 'Unused' }}
+                </span>
+              </td>
               <td class="video-table__action-cell">
                 <VideoRowActionMenu
                   :label="row.title"
                   removable
-                  :busy="removePending"
+                  :reference-used="row.isReferenceUsed"
+                  :busy="removePending || usagePending"
                   @history="emit('open-history', row)"
+                  @toggle-reference-used="emit('toggle-reference-used', row)"
                   @remove="emit('remove-reference', row)"
                 />
               </td>

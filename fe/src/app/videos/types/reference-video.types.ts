@@ -19,6 +19,8 @@ export interface ReferenceVideoRow {
   readonly publishedLabel: string
   readonly ageLabel: string
   readonly lastStatsFetchedLabel: string
+  readonly referenceSetLabel: string
+  readonly isReferenceUsed: boolean
 }
 
 export interface ReferenceVideoPagination {

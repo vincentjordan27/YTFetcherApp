@@ -152,6 +152,38 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
         }
     }
 
+    public async Task<bool> TrySetReferenceUsedAsync(
+        Guid videoId,
+        bool isUsed,
+        Guid actorUserId,
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var locked = await LockVideosAsync([videoId], cancellationToken);
+            var video = locked.Count == 1 ? locked[0] : null;
+
+            if (video is null || video.IsDeleted || !video.SetReferenceUsed(isUsed, utcNow, actorUserId))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                dbContext.ChangeTracker.Clear();
+                return false;
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return true;
+        }
+        catch
+        {
+            await RollbackAndClearAsync(transaction);
+            throw;
+        }
+    }
+
     /// <summary>
     /// One joined query per page. The order is applied to the video query first, because every sort key is a
     /// video column: EF then emits one statement whose ORDER BY covers the joined result, and the join only
@@ -196,6 +228,17 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
                     .ThenByDescending(video => video.LastStatsFetchedAt)
                 : videos.OrderBy(video => video.LastStatsFetchedAt == null)
                     .ThenBy(video => video.LastStatsFetchedAt);
+
+            return TieBreak(byTimestamp, descending);
+        }
+
+        if (sortBy == VideoListSortBy.ReferenceSetAt)
+        {
+            var byTimestamp = descending
+                ? videos.OrderBy(video => video.ReferenceSetAt == null)
+                    .ThenByDescending(video => video.ReferenceSetAt)
+                : videos.OrderBy(video => video.ReferenceSetAt == null)
+                    .ThenBy(video => video.ReferenceSetAt);
 
             return TieBreak(byTimestamp, descending);
         }

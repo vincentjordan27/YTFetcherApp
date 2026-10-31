@@ -1,9 +1,9 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { getReferenceVideos, unmarkVideoReference } from '@/app/videos/api/videos-api'
+import { getReferenceVideos, setReferenceVideoUsed, unmarkVideoReference } from '@/app/videos/api/videos-api'
 import { toReferenceVideoRow } from '@/app/videos/data/reference-video.mapper'
 import { nextVideoSort, toVideoSortLabel } from '@/app/videos/data/video-sort.mapper'
 import type { ReferenceVideoPagination, ReferenceVideoRow } from '@/app/videos/types/reference-video.types'
-import { DEFAULT_VIDEO_SORT, type VideoSort, type VideoSortField } from '@/app/videos/types/video-sort.types'
+import type { VideoSort, VideoSortField } from '@/app/videos/types/video-sort.types'
 import { ApiError } from '@/common/api/api-client'
 import { useToast } from '@/common/composables/useToast'
 import { getInitialTablePageSize } from '@/common/data/initial-table-page-size'
@@ -18,6 +18,11 @@ const LIST_FAILURE_MESSAGE = "Couldn't load videos."
 
 const REMOVE_SUCCESS_MESSAGE = 'Returned to active tracking.'
 const REMOVE_FAILURE_MESSAGE = "Couldn't return the video to active tracking. Check your connection and try again."
+const MARK_USED_SUCCESS_MESSAGE = 'Marked as used.'
+const MARK_UNUSED_SUCCESS_MESSAGE = 'Marked as unused.'
+const UPDATE_USAGE_FAILURE_MESSAGE = "Couldn't update the usage flag. Check your connection and try again."
+
+const DEFAULT_REFERENCE_VIDEO_SORT: VideoSort = { field: 'referenceSetAt', direction: 'desc' }
 
 /**
  * Server-paged state for the live Reference tab: 300 ms debounced server search, one-based paging, a page
@@ -29,12 +34,13 @@ export function useReferenceVideos() {
   const searchText = ref('')
   const rowsPerPage = ref(getInitialTablePageSize())
   const currentPage = ref(INITIAL_PAGE)
-  const sort = ref<VideoSort>({ ...DEFAULT_VIDEO_SORT })
+  const sort = ref<VideoSort>({ ...DEFAULT_REFERENCE_VIDEO_SORT })
   const rows = ref<ReferenceVideoRow[]>([])
   const totalCount = ref(0)
   const loading = ref(false)
   const requestFailed = ref(false)
   const removePending = ref(false)
+  const usagePending = ref(false)
   const { showToast } = useToast()
 
   let requestId = 0
@@ -172,6 +178,25 @@ export function useReferenceVideos() {
     showToast({ tone: 'success', message: REMOVE_SUCCESS_MESSAGE })
   }
 
+  async function toggleReferenceUsage(row: ReferenceVideoRow): Promise<void> {
+    if (usagePending.value) return
+
+    const nextIsUsed = !row.isReferenceUsed
+    usagePending.value = true
+
+    try {
+      await setReferenceVideoUsed(row.id, nextIsUsed)
+    } catch (caught) {
+      usagePending.value = false
+      showToast({ tone: 'failure', message: readableUsageFailure(caught) })
+      return
+    }
+
+    await load()
+    usagePending.value = false
+    showToast({ tone: 'success', message: nextIsUsed ? MARK_USED_SUCCESS_MESSAGE : MARK_UNUSED_SUCCESS_MESSAGE })
+  }
+
   return {
     searchInput,
     currentPage,
@@ -183,13 +208,29 @@ export function useReferenceVideos() {
     pagination,
     tableState,
     removePending,
+    usagePending,
     updateSearchInput,
     goToPage,
     updateRowsPerPage,
     setSort,
     retry,
     removeReference,
+    toggleReferenceUsage,
   }
+}
+
+function readableUsageFailure(error: unknown): string {
+  if (error instanceof ApiError && (error.status === 400 || error.status === 404 || error.status === 409)) {
+    const body = error.body
+    if (typeof body === 'object' && body !== null && 'detail' in body) {
+      const detail = (body as { detail?: unknown }).detail
+      if (typeof detail === 'string' && detail.length > 0) {
+        return detail
+      }
+    }
+  }
+
+  return UPDATE_USAGE_FAILURE_MESSAGE
 }
 
 /**

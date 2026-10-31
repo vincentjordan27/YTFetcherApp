@@ -228,6 +228,67 @@ public class VideoRepositoryTests
     }
 
     [Fact]
+    public async Task Reference_page_orders_by_the_reference_date_with_nulls_last()
+    {
+        await using var context = CreateContext();
+        var channel = AddChannel(context, "Sakura Channel");
+        await context.SaveChangesAsync();
+
+        var oldest = AddVideo(context, channel, "v-oldest", "Oldest");
+        oldest.IsReference = true;
+        oldest.ReferenceSetAt = Base.AddDays(-2);
+
+        var newest = AddVideo(context, channel, "v-newest", "Newest");
+        newest.IsReference = true;
+        newest.ReferenceSetAt = Base.AddDays(-1);
+
+        var legacy = AddVideo(context, channel, "v-legacy", "Legacy");
+        legacy.IsReference = true;
+        legacy.ReferenceSetAt = null;
+        await context.SaveChangesAsync();
+
+        var repository = new VideoRepository(context);
+
+        var rows = await repository.GetReferencePageAsync(
+            1,
+            10,
+            null,
+            VideoListSortBy.ReferenceSetAt,
+            VideoListSortDirection.Desc,
+            CancellationToken.None);
+
+        Assert.Equal([newest.Id, oldest.Id, legacy.Id], rows.Select(row => row.Video.Id));
+    }
+
+    [Fact]
+    public async Task Set_reference_used_updates_only_a_reference_row()
+    {
+        await using var context = CreateContext();
+        var channel = AddChannel(context, "Sakura Channel");
+        await context.SaveChangesAsync();
+        var reference = AddVideo(context, channel, "v-reference", "Saved clip");
+        reference.IsReference = true;
+        reference.ReferenceSetAt = Base.AddDays(-1);
+        var active = AddVideo(context, channel, "v-active", "Active clip");
+        await context.SaveChangesAsync();
+
+        var repository = new VideoRepository(context);
+
+        Assert.True(await repository.TrySetReferenceUsedAsync(
+            reference.Id, true, ActorUserId, Base, CancellationToken.None));
+        Assert.False(await repository.TrySetReferenceUsedAsync(
+            active.Id, true, ActorUserId, Base, CancellationToken.None));
+
+        var storedReference = await context.Videos.AsNoTracking().SingleAsync(video => video.Id == reference.Id);
+        var storedActive = await context.Videos.AsNoTracking().SingleAsync(video => video.Id == active.Id);
+        Assert.True(storedReference.IsReferenceUsed);
+        Assert.Equal(Base, storedReference.ModifiedAt);
+        Assert.Equal(ActorUserId, storedReference.ModifiedByUserId);
+        Assert.False(storedActive.IsReferenceUsed);
+        Assert.Equal(VideoTrackingStatus.ACTIVE, storedActive.TrackingStatus);
+    }
+
+    [Fact]
     public async Task Remove_reference_returns_a_young_video_to_active_and_leaves_its_statistics_untouched()
     {
         await using var context = CreateContext();
@@ -362,6 +423,7 @@ public class VideoRepositoryTests
         Assert.All(stored, video =>
         {
             Assert.True(video.IsReference);
+            Assert.True(video.IsReferenceUsed);
             Assert.Equal(VideoTrackingStatus.STOPPED, video.TrackingStatus);
             Assert.Equal(Base, video.ReferenceSetAt);
             Assert.Equal(ActorUserId, video.ReferenceSetByUserId);

@@ -19,5 +19,8 @@ public enum VideoListSortBy
     PublishedAt,
 
     /// <summary>Last statistics fetch timestamp; rows without one always sort last.</summary>
-    LastUpdatedAt
+    LastUpdatedAt,
+
+    /// <summary>Timestamp at which an operator added a video to Reference; nulls always sort last.</summary>
+    ReferenceSetAt
 }

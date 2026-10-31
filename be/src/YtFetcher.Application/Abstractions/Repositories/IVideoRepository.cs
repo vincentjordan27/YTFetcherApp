@@ -75,4 +75,15 @@ public interface IVideoRepository
         Guid actorUserId,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Sets the current Used/Unused flag of one live Reference row in a short locked transaction. Returns
+    /// <c>false</c> when the row is missing, soft-deleted, or is no longer Reference.
+    /// </summary>
+    Task<bool> TrySetReferenceUsedAsync(
+        Guid videoId,
+        bool isUsed,
+        Guid actorUserId,
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken);
 }
