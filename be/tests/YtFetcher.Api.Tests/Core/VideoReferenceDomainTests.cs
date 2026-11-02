@@ -66,6 +66,18 @@ public class VideoReferenceDomainTests
     }
 
     [Fact]
+    public void Mark_as_reference_can_start_as_unused()
+    {
+        var video = CreateReferenceVideo(Now.AddDays(-1), 100);
+        video.IsReference = false;
+
+        video.MarkAsReference(Now, Guid.NewGuid(), isUsed: false);
+
+        Assert.True(video.IsReference);
+        Assert.False(video.IsReferenceUsed);
+    }
+
+    [Fact]
     public void Remove_reference_returns_a_young_video_to_active_and_preserves_counts_and_history()
     {
         var video = CreateReferenceVideo(publishedAt: Now.AddDays(-(Video.MatureAgeDays - 1)), views: 10_000_000);

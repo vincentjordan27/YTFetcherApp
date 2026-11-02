@@ -333,7 +333,7 @@ public class VideoReferenceEndpointTests
         await SeedVideoAsync(application, "v-1", "One", isReference: true);
         using var client = application.CreateClient();
 
-        foreach (var field in new[] { "title", "views", "likes", "publishedAt", "lastUpdatedAt", "referenceSetAt" })
+        foreach (var field in new[] { "title", "views", "likes", "publishedAt", "lastUpdatedAt", "referenceSetAt", "referenceUsed" })
         {
             foreach (var direction in new[] { "asc", "desc" })
             {

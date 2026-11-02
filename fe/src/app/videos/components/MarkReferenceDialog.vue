@@ -6,6 +6,7 @@ defineProps<{
   selectedCount: number
   pending: boolean
   error?: string | null
+  isUsed?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -25,7 +26,7 @@ const dialogTitleId = 'mark-reference-dialog-title'
     @close="emit('close')"
   >
     <template #header>
-      <h2 :id="dialogTitleId" class="mark-reference-dialog__title">Mark as reference</h2>
+      <h2 :id="dialogTitleId" class="mark-reference-dialog__title">{{ isUsed ? 'Mark as reference' : 'Mark as unused' }}</h2>
       <button
         type="button"
         class="mark-reference-dialog__close"
@@ -60,7 +61,7 @@ const dialogTitleId = 'mark-reference-dialog-title'
         :disabled="pending"
         @click="emit('confirm')"
       >
-        <span>{{ pending ? 'Marking…' : 'Mark as reference' }}</span>
+        <span>{{ pending ? 'Marking…' : isUsed ? 'Mark as reference' : 'Mark as unused' }}</span>
       </button>
     </template>
   </AppDialog>

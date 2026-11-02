@@ -22,5 +22,7 @@ public enum VideoListSortBy
     LastUpdatedAt,
 
     /// <summary>Timestamp at which an operator added a video to Reference; nulls always sort last.</summary>
-    ReferenceSetAt
+    ReferenceSetAt,
+
+    ReferenceUsed
 }

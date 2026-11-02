@@ -54,8 +54,8 @@ export function getActiveVideoCount(): Promise<ActiveVideoCountResponse> {
 }
 
 /** All-or-nothing: the server returns 204 or a readable 409 conflict. */
-export function markVideosReference(videoIds: readonly string[]): Promise<void> {
-  const body: MarkVideosReferenceBody = { videoIds }
+export function markVideosReference(videoIds: readonly string[], isUsed = true): Promise<void> {
+  const body: MarkVideosReferenceBody = { videoIds, isUsed }
 
   return apiRequest<void>('/api/videos/mark-reference', {
     method: 'POST',

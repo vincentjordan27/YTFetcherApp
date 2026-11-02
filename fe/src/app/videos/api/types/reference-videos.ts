@@ -1,7 +1,7 @@
 /** Wire contracts for the reference-video list action `POST /api/videos/reference/list`. */
 
 /** Sort columns the reference list accepts; mirrors the server contract exactly. */
-export type ReferenceVideosSortBy = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt' | 'referenceSetAt'
+export type ReferenceVideosSortBy = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt' | 'referenceSetAt' | 'referenceUsed'
 
 export type ReferenceVideosSortDirection = 'asc' | 'desc'
 

@@ -24,7 +24,7 @@ public sealed class ActiveVideosRequestValidator : AbstractValidator<ActiveVideo
 
         RuleFor(request => request.SortBy)
             .Must(value => value is null || Enum.GetNames<VideoListSortBy>().Contains(value, StringComparer.OrdinalIgnoreCase))
-            .WithMessage("sortBy must be one of: title, views, likes, publishedAt, lastUpdatedAt, referenceSetAt.")
+            .WithMessage("sortBy must be one of: title, views, likes, publishedAt, lastUpdatedAt, referenceSetAt, referenceUsed.")
             .OverridePropertyName("sortBy");
 
         RuleFor(request => request.SortDirection)

@@ -37,6 +37,7 @@ const emit = defineEmits<{
   'toggle-visible-selection': []
   'open-mark-reference': []
   'open-mark-single-reference': [row: ActiveVideoRow]
+  'open-mark-single-unused': [row: ActiveVideoRow]
   'open-history': [row: ActiveVideoRow]
   'open-preview': [row: ActiveVideoRow]
   'set-sort': [field: VideoSortField]
@@ -270,7 +271,9 @@ function channelUrl(youtubeChannelId: string): string {
                 <VideoRowActionMenu
                   :label="row.title"
                   markable
+                  mark-unused
                   @mark="emit('open-mark-single-reference', row)"
+                  @mark-unused="emit('open-mark-single-unused', row)"
                   @history="emit('open-history', row)"
                 />
               </td>

@@ -167,10 +167,10 @@ public sealed class Video : AuditableEntity
     /// tracking, and records the reference metadata. Title, channel, current views/likes, published
     /// timestamp, and the last stats fetch time are deliberately left unchanged.
     /// </summary>
-    public void MarkAsReference(DateTimeOffset utcNow, Guid actorUserId)
+    public void MarkAsReference(DateTimeOffset utcNow, Guid actorUserId, bool isUsed = true)
     {
         IsReference = true;
-        IsReferenceUsed = true;
+        IsReferenceUsed = isUsed;
         ReferenceSetAt = utcNow;
         ReferenceSetByUserId = actorUserId;
         TrackingStatus = VideoTrackingStatus.STOPPED;

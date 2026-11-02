@@ -261,6 +261,33 @@ public class VideoRepositoryTests
     }
 
     [Fact]
+    public async Task Reference_page_orders_by_usage_state()
+    {
+        await using var context = CreateContext();
+        var channel = AddChannel(context, "Sakura Channel");
+        await context.SaveChangesAsync();
+
+        var used = AddVideo(context, channel, "v-used", "Used");
+        used.IsReference = true;
+        used.IsReferenceUsed = true;
+
+        var unused = AddVideo(context, channel, "v-unused", "Unused");
+        unused.IsReference = true;
+        unused.IsReferenceUsed = false;
+        await context.SaveChangesAsync();
+
+        var repository = new VideoRepository(context);
+
+        var ascending = await repository.GetReferencePageAsync(
+            1, 10, null, VideoListSortBy.ReferenceUsed, VideoListSortDirection.Asc, CancellationToken.None);
+        var descending = await repository.GetReferencePageAsync(
+            1, 10, null, VideoListSortBy.ReferenceUsed, VideoListSortDirection.Desc, CancellationToken.None);
+
+        Assert.Equal([unused.Id, used.Id], ascending.Select(row => row.Video.Id));
+        Assert.Equal([used.Id, unused.Id], descending.Select(row => row.Video.Id));
+    }
+
+    [Fact]
     public async Task Set_reference_used_updates_only_a_reference_row()
     {
         await using var context = CreateContext();
@@ -408,6 +435,7 @@ public class VideoRepositoryTests
 
         var committed = await repository.TryMarkAsReferenceAsync(
             [first.Id, second.Id],
+            true,
             ActorUserId,
             Base,
             CancellationToken.None);
@@ -448,6 +476,7 @@ public class VideoRepositoryTests
 
         var committed = await repository.TryMarkAsReferenceAsync(
             [active.Id, stopped.Id],
+            true,
             ActorUserId,
             Base,
             CancellationToken.None);

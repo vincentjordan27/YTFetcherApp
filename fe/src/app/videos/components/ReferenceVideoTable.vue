@@ -149,7 +149,12 @@ function channelUrl(youtubeChannelId: string): string {
                     <span v-if="props.sort.field === 'referenceSetAt'" class="video-table__sort-icon" :class="{ 'video-table__sort-icon--desc': props.sort.direction === 'desc' }" aria-hidden="true"></span>
                   </button>
                 </th>
-                <th>Usage</th>
+                <th :aria-sort="toAriaSort(props.sort, 'referenceUsed')">
+                  <button type="button" class="video-table__sort" :aria-label="toVideoSortAriaLabel('referenceUsed')" @click="emit('set-sort', 'referenceUsed')">
+                    Usage
+                    <span v-if="props.sort.field === 'referenceUsed'" class="video-table__sort-icon" :class="{ 'video-table__sort-icon--desc': props.sort.direction === 'desc' }" aria-hidden="true"></span>
+                  </button>
+                </th>
                 <th class="video-table__action-heading"><span class="sr-only">Actions</span></th>
               </tr>
             </template>

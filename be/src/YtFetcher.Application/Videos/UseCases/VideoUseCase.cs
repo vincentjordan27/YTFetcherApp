@@ -106,6 +106,7 @@ public sealed class VideoUseCase(
         // The all-or-nothing verification and transition live in the repository's short transaction.
         videoRepository.TryMarkAsReferenceAsync(
             request.VideoIds ?? [],
+            request.IsUsed ?? true,
             currentActor.UserId,
             timeProvider.GetUtcNow(),
             cancellationToken);

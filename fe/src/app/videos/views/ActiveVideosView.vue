@@ -29,6 +29,7 @@ const {
   markReferenceOpen,
   markReferencePending,
   markReferenceError,
+  markReferenceIsUsed,
   updateSearchInput,
   goToPage,
   updateRowsPerPage,
@@ -38,6 +39,7 @@ const {
   toggleVisibleSelection,
   openMarkReference,
   openSingleMarkReference,
+  openSingleMarkUnused,
   closeMarkReference,
   confirmMarkReference,
 } = useActiveVideos()
@@ -92,6 +94,7 @@ function openPreview(row: ActiveVideoRow): void {
       @toggle-visible-selection="toggleVisibleSelection"
       @open-mark-reference="openMarkReference"
       @open-mark-single-reference="openSingleMarkReference($event.id)"
+      @open-mark-single-unused="openSingleMarkUnused($event.id)"
       @open-history="openHistory"
       @open-preview="openPreview"
     />
@@ -100,6 +103,7 @@ function openPreview(row: ActiveVideoRow): void {
       :selected-count="selectedCount"
       :pending="markReferencePending"
       :error="markReferenceError"
+      :is-used="markReferenceIsUsed"
       @close="closeMarkReference"
       @confirm="confirmMarkReference"
     />

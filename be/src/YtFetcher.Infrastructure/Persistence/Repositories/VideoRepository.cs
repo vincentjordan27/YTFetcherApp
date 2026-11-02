@@ -77,6 +77,7 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
 
     public async Task<bool> TryMarkAsReferenceAsync(
         IReadOnlyList<Guid> videoIds,
+        bool isUsed,
         Guid actorUserId,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken)
@@ -103,7 +104,7 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
 
             foreach (var video in videos)
             {
-                video.MarkAsReference(utcNow, actorUserId);
+                video.MarkAsReference(utcNow, actorUserId, isUsed);
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -250,6 +251,7 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
             VideoListSortBy.Title => Order(videos, video => video.Title.ToLower(), descending),
             VideoListSortBy.Likes => Order(videos, video => video.CurrentLikes, descending),
             VideoListSortBy.PublishedAt => Order(videos, video => video.PublishedAt, descending),
+            VideoListSortBy.ReferenceUsed => Order(videos, video => video.IsReferenceUsed, descending),
             _ => Order(videos, video => video.CurrentViews, descending)
         };
 

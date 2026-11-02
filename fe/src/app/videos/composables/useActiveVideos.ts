@@ -19,6 +19,7 @@ const LIST_FAILURE_MESSAGE = "Couldn't load videos."
 const MARK_CONFLICT_MESSAGE = 'One or more selected videos are no longer active. Refresh the list and try again.'
 const MARK_FAILURE_MESSAGE = "Couldn't mark the selected videos as reference. Check your connection and try again."
 const MARK_SUCCESS_MESSAGE = 'Videos marked as reference.'
+const MARK_UNUSED_SUCCESS_MESSAGE = 'Video marked as unused.'
 
 /**
  * Server-paged state for the live Active tab: 300 ms debounced server search, one-based paging, a
@@ -39,6 +40,7 @@ export function useActiveVideos() {
   const markReferenceOpen = ref(false)
   const markReferencePending = ref(false)
   const markReferenceError = ref<string | null>(null)
+  const markReferenceIsUsed = ref(true)
   const { showToast } = useToast()
 
   let requestId = 0
@@ -197,6 +199,7 @@ export function useActiveVideos() {
   function openMarkReference(): void {
     if (!canMarkReference.value) return
     markReferenceError.value = null
+    markReferenceIsUsed.value = true
     markReferenceOpen.value = true
   }
 
@@ -207,10 +210,20 @@ export function useActiveVideos() {
     openMarkReference()
   }
 
+  function openSingleMarkUnused(videoId: string): void {
+    if (markReferencePending.value) return
+
+    selectedIds.value = new Set([videoId])
+    markReferenceError.value = null
+    markReferenceIsUsed.value = false
+    markReferenceOpen.value = true
+  }
+
   function closeMarkReference(): void {
     if (markReferencePending.value) return
     markReferenceOpen.value = false
     markReferenceError.value = null
+    markReferenceIsUsed.value = true
   }
 
   async function confirmMarkReference(): Promise<void> {
@@ -220,7 +233,7 @@ export function useActiveVideos() {
     markReferenceError.value = null
 
     try {
-      await markVideosReference(selectedIdList.value)
+      await markVideosReference(selectedIdList.value, markReferenceIsUsed.value)
     } catch (caught) {
       markReferencePending.value = false
 
@@ -240,7 +253,7 @@ export function useActiveVideos() {
     markReferenceOpen.value = false
     // Reload clears the selection through the normal list-result path.
     await load()
-    showToast({ tone: 'success', message: MARK_SUCCESS_MESSAGE })
+    showToast({ tone: 'success', message: markReferenceIsUsed.value ? MARK_SUCCESS_MESSAGE : MARK_UNUSED_SUCCESS_MESSAGE })
   }
 
   return {
@@ -260,6 +273,7 @@ export function useActiveVideos() {
     markReferenceOpen,
     markReferencePending,
     markReferenceError,
+    markReferenceIsUsed,
     updateSearchInput,
     goToPage,
     updateRowsPerPage,
@@ -270,6 +284,7 @@ export function useActiveVideos() {
     toggleVisibleSelection,
     openMarkReference,
     openSingleMarkReference,
+    openSingleMarkUnused,
     closeMarkReference,
     confirmMarkReference,
   }

@@ -61,6 +61,7 @@ public interface IVideoRepository
     /// </summary>
     Task<bool> TryMarkAsReferenceAsync(
         IReadOnlyList<Guid> videoIds,
+        bool isUsed,
         Guid actorUserId,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken);

@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
 
-const props = withDefaults(defineProps<{ label: string; markable?: boolean; removable?: boolean; referenceUsed?: boolean; busy?: boolean }>(), {
+const props = withDefaults(defineProps<{ label: string; markable?: boolean; markUnused?: boolean; removable?: boolean; referenceUsed?: boolean; busy?: boolean }>(), {
   markable: false,
+  markUnused: false,
   removable: false,
   busy: false,
 })
 
-const emit = defineEmits<{ history: []; mark: []; remove: []; 'toggle-reference-used': [] }>()
+const emit = defineEmits<{ history: []; mark: []; 'mark-unused': []; remove: []; 'toggle-reference-used': [] }>()
 
 const PANEL_WIDTH = 168
 const PANEL_MARGIN = 8
@@ -51,6 +52,11 @@ function selectHistory(): void {
 function selectMark(): void {
   close()
   emit('mark')
+}
+
+function selectMarkUnused(): void {
+  close()
+  emit('mark-unused')
 }
 
 function selectRemove(): void {
@@ -119,6 +125,9 @@ onBeforeUnmount(() => {
       <div v-if="open" ref="panelRef" class="video-row-menu__panel" role="menu" :style="panelStyle">
         <button v-if="props.markable" type="button" class="video-row-menu__item" role="menuitem" @click="selectMark">
           Mark as reference
+        </button>
+        <button v-if="props.markUnused" type="button" class="video-row-menu__item" role="menuitem" @click="selectMarkUnused">
+          Mark as unused
         </button>
         <button type="button" class="video-row-menu__item" role="menuitem" @click="selectHistory">
           History
