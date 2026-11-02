@@ -245,6 +245,7 @@ function channelUrl(youtubeChannelId: string): string {
                 <VideoRowActionMenu
                   :label="row.title"
                   removable
+                  reference-usage
                   :reference-used="row.isReferenceUsed"
                   :busy="removePending || usagePending"
                   @history="emit('open-history', row)"

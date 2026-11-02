@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
 
-const props = withDefaults(defineProps<{ label: string; markable?: boolean; markUnused?: boolean; removable?: boolean; referenceUsed?: boolean; busy?: boolean }>(), {
+const props = withDefaults(defineProps<{ label: string; markable?: boolean; markUnused?: boolean; removable?: boolean; referenceUsage?: boolean; referenceUsed?: boolean; busy?: boolean }>(), {
   markable: false,
   markUnused: false,
   removable: false,
+  referenceUsage: false,
   busy: false,
 })
 
@@ -133,7 +134,7 @@ onBeforeUnmount(() => {
           History
         </button>
         <button
-          v-if="props.referenceUsed !== undefined"
+          v-if="props.referenceUsage"
           type="button"
           class="video-row-menu__item"
           role="menuitem"

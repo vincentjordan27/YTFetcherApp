@@ -1,5 +1,7 @@
 # YT Fetcher Workspace
 
+[![CI](https://github.com/vincentjordan27/YTFetcherApp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/vincentjordan27/YTFetcherApp/actions/workflows/ci.yml)
+
 This workspace combines the frontend and backend of **YT Fetcher**: an application for discovering, tracking, and updating high-performing YouTube videos by niche. Administrators can manage keywords and channels, run and review backfills, monitor YouTube API quota usage, and view video rankings and snapshot history.
 
 ![YT Fetcher system flow](be/docs/assets/yt-fetcher-system-flow.png)
@@ -11,7 +13,7 @@ This workspace combines the frontend and backend of **YT Fetcher**: an applicati
 | Frontend | [`fe`](fe/README.md) | Vue 3 admin interface for optional authentication, channel review, niche management, backfills, quota tracking, video rankings, and snapshot history. |
 | Backend | [`be`](be/README.md) | ASP.NET Core API with PostgreSQL, scheduled processing, YouTube integration, and optional Firebase authentication. |
 
-Each directory retains its own application documentation, configuration, dependencies, and CI workflow.
+Each directory retains its own application documentation, configuration, and dependencies.
 
 ## Architecture Overview
 
