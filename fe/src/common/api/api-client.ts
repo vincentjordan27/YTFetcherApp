@@ -14,11 +14,9 @@ const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') ?? ''
 let unauthorizedResponseHandler: (() => void) | null = null
 
 interface ApiRequestInit extends RequestInit {
-  /** Auth endpoints opt out because their 401 is an intentional sign-in result, not an expired app session. */
   readonly handleUnauthorized?: boolean
 }
 
-/** Registers the one application-level reaction to a protected API request losing its session. */
 export function setUnauthorizedResponseHandler(handler: (() => void) | null): void {
   unauthorizedResponseHandler = handler
 }
@@ -34,8 +32,6 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
 
   const response = await fetch(`${apiBaseUrl}${path}`, {
     ...requestInit,
-    // The API runs on its own origin and the session travels in its HttpOnly cookie, so every request opts
-    // into credentialed cross-origin calls.
     credentials: 'include',
     headers,
   })
@@ -45,20 +41,19 @@ export async function apiRequest<T>(path: string, init: ApiRequestInit = {}): Pr
   }
 
   const body = await readResponseBody(response)
-  if (!response.ok) {
-    if (response.status === 401 && handleUnauthorized) {
-      unauthorizedResponseHandler?.()
-    }
-
-    throw new ApiError(response.status, body)
+  if (response.ok) {
+    return body as T
   }
 
-  return body as T
+  if (response.status === 401 && handleUnauthorized) {
+    unauthorizedResponseHandler?.()
+  }
+
+  throw new ApiError(response.status, body)
 }
 
 async function readResponseBody(response: Response): Promise<unknown> {
   const contentType = response.headers.get('content-type') ?? ''
-  // Problem responses use application/problem+json; both JSON media types carry a readable message.
   const isJson = contentType.includes('application/json') || contentType.includes('application/problem+json')
   return isJson ? response.json() : response.text()
 }

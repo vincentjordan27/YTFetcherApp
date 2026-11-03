@@ -54,9 +54,6 @@ export function usePendingChannelReview() {
   const { tabs, loadReviewCounts } = useChannelReviewTabs()
 
   let pendingListRequestId = 0
-  // Lifecycle epoch for the evidence path. It is captured by every evidence request and bumped only on unmount,
-  // so an evidence response can never publish into a feature that is already gone while two channels' requests
-  // stay independent of each other.
   let evidenceLifecycleId = 0
   let searchTimer: ReturnType<typeof window.setTimeout> | undefined
 
@@ -97,8 +94,6 @@ export function usePendingChannelReview() {
     void loadPending()
   })
 
-  // Unmount invalidates the debounce, the in-flight list request, and every in-flight evidence request, so no
-  // late response can write list or evidence state after the feature is gone.
   onBeforeUnmount(() => {
     window.clearTimeout(searchTimer)
     searchTimer = undefined
@@ -124,7 +119,6 @@ export function usePendingChannelReview() {
 
       const lastValidPage = Math.max(CHANNEL_INITIAL_PAGE, Math.ceil(response.totalCount / rowsPerPage.value))
       if (currentPage.value > lastValidPage) {
-        // Exactly one replacement request so an invalid range is never rendered.
         currentPage.value = lastValidPage
         loading.value = false
         await loadPending()
@@ -149,7 +143,6 @@ export function usePendingChannelReview() {
     }
   }
 
-  /** Debounces the search box, applies it as the server-side `query`, and restarts at page one. */
   function updateSearchInput(value: string): void {
     searchInput.value = value
     window.clearTimeout(searchTimer)
@@ -190,7 +183,6 @@ export function usePendingChannelReview() {
     void loadPending()
   }
 
-  /** Server truth after a mutation: reload the pending page and the shared tab counts together. */
   async function refresh(): Promise<void> {
     await loadPending()
     await loadReviewCounts()
@@ -198,7 +190,7 @@ export function usePendingChannelReview() {
 
   function toggleEvidence(channelId: string): void {
     if (expandedEvidenceId.value === channelId) {
-      expandedEvidenceId.value = null
+      closeEvidence()
       return
     }
 
@@ -211,6 +203,10 @@ export function usePendingChannelReview() {
     void loadEvidence(channelId)
   }
 
+  function closeEvidence(): void {
+    expandedEvidenceId.value = null
+  }
+
   async function loadEvidence(channelId: string): Promise<void> {
     const lifecycleId = evidenceLifecycleId
     evidenceLoadingId.value = channelId
@@ -219,8 +215,6 @@ export function usePendingChannelReview() {
     try {
       const response = await getChannelEvidence(channelId)
 
-      // The captured epoch is the only ownership test: a response that outlives its feature writes nothing,
-      // while another channel's newer request never invalidates this one.
       if (lifecycleId !== evidenceLifecycleId) {
         return
       }
@@ -369,6 +363,7 @@ export function usePendingChannelReview() {
     retry,
     refresh,
     toggleEvidence,
+    closeEvidence,
     openActionDialog,
     openSelectedAction,
     closeActionDialog,
@@ -389,8 +384,6 @@ function mutationErrorMessage(error: unknown): string {
       return MUTATION_MISSING_MESSAGE
     }
 
-    // 429 (daily approved-channel maximum or exhausted request quota) and 503 (quota window not ready) already
-    // carry a readable operator message from the backend.
     if ((error.status === 429 || error.status === 503) && typeof error.body === 'object' && error.body !== null) {
       const detail = (error.body as { detail?: unknown }).detail
       if (typeof detail === 'string' && detail.length > 0) {

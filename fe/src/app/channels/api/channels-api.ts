@@ -69,14 +69,12 @@ export function getChannelEvidence(channelId: string): Promise<ChannelEvidenceRe
 }
 
 export function approveChannel(channelId: string): Promise<ChannelDetailResponse> {
-  // Approve carries no data yet, but every non-GET action sends a JSON body.
   return apiRequest<ChannelDetailResponse>(`/api/channels/${channelId}/approve`, {
     method: 'POST',
     body: JSON.stringify({}),
   })
 }
 
-/** Every selected channel is approved, or the API changes none of them. */
 export function approveChannels(channelIds: readonly string[]): Promise<void> {
   const body: BulkApproveChannelsBody = { channelIds }
 
@@ -93,7 +91,6 @@ export function rejectChannel(channelId: string, reason: string): Promise<Channe
   })
 }
 
-/** Every selected channel receives the same reason, or the API changes none of them. */
 export function rejectChannels(channelIds: readonly string[], reason: string): Promise<void> {
   const body: BulkRejectChannelsBody = { channelIds, reason }
 
@@ -110,7 +107,6 @@ export function reopenChannel(channelId: string): Promise<ChannelDetailResponse>
   })
 }
 
-/** Adds one channel found outside discovery by its @handle; the server validates it with YouTube. */
 export function manualApproveChannel(channelReference: string): Promise<ChannelDetailResponse> {
   const body: ManualApproveChannelBody = { channelReference }
 
