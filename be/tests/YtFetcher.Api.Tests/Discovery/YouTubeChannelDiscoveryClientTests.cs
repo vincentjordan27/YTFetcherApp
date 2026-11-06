@@ -69,23 +69,9 @@ public class YouTubeChannelDiscoveryClientTests
 
         var channelsUri = Assert.Single(handler.RequestUris);
         Assert.StartsWith("https://www.googleapis.com/youtube/v3/channels?", channelsUri);
-        Assert.Equal("snippet,contentDetails", QueryValue(channelsUri, "part"));
+        Assert.Equal("snippet,contentDetails,statistics", QueryValue(channelsUri, "part"));
         Assert.Equal("UC1", QueryValue(channelsUri, "id"));
         Assert.Equal("real-key", QueryValue(channelsUri, "key"));
-    }
-
-    [Fact]
-    public async Task Metadata_lookup_requests_channel_statistics()
-    {
-        var responses = new Queue<HttpResponseMessage>([
-            Json(ChannelsResponseJson([("UC1", "Channel One")]))
-        ]);
-        var (client, handler) = CreateClient("real-key", _ => responses.Dequeue());
-
-        await client.GetChannelMetadataAsync(["UC1"], CancellationToken.None);
-
-        var channelsUri = Assert.Single(handler.RequestUris);
-        Assert.Equal("snippet,contentDetails,statistics", QueryValue(channelsUri, "part"));
     }
 
     [Fact]
