@@ -29,12 +29,6 @@ interface LedgerPage {
   readonly totalCount: number
 }
 
-/**
- * Shared server-paged ledger state for the approved and rejected channel tabs: debounced server search, page
- * clamping with exactly one replacement request, and the real tab badges. The caller passes only the narrow
- * ledger variant; this composable owns which endpoint function and mapper that variant uses, so no view imports
- * an API function or a mapper.
- */
 export function useChannelLedger(variant: ChannelLedgerVariant) {
   const { tabs, loadReviewCounts } = useChannelReviewTabs()
 
@@ -72,7 +66,6 @@ export function useChannelLedger(variant: ChannelLedgerVariant) {
     requestId += 1
   })
 
-  /** The variant decides the endpoint and the mapper; the view never sees either. */
   async function fetchPage(request: LedgerPageRequest): Promise<LedgerPage> {
     if (variant === 'approved') {
       const response = await getApprovedChannels(request)

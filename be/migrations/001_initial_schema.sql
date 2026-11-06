@@ -152,6 +152,7 @@ CREATE TABLE channels (
     youtube_channel_id VARCHAR(64) NOT NULL,
     name VARCHAR(500) NOT NULL,
     thumbnail_url TEXT NULL,
+    subscriber_count BIGINT NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     uploads_playlist_id VARCHAR(64) NULL,
     backfill_status VARCHAR(20) NOT NULL DEFAULT 'PENDING',

@@ -5,4 +5,5 @@ public sealed record YouTubeChannelMetadata(
     string YouTubeChannelId,
     string ChannelName,
     string? ChannelThumbnailUrl,
-    string? UploadsPlaylistId);
+    string? UploadsPlaylistId,
+    long? SubscriberCount = null);

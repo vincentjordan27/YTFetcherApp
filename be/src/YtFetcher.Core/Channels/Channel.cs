@@ -27,6 +27,9 @@ public sealed class Channel : AuditableEntity
     [Column("thumbnail_url", TypeName = "text")]
     public string? ThumbnailUrl { get; set; }
 
+    [Column("subscriber_count")]
+    public long? SubscriberCount { get; set; }
+
     [Required]
     [MaxLength(20)]
     [Column("status")]

@@ -10,7 +10,6 @@ const props = defineProps<{
   rejectionReason: string
   pending: boolean
   error?: string | null
-  /** Distinguishes the pending rejection from the approved-channel rejection copy. */
   rejectionContext?: 'pending' | 'approved'
 }>()
 

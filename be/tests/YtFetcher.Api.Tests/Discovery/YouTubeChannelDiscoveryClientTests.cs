@@ -65,12 +65,40 @@ public class YouTubeChannelDiscoveryClientTests
         Assert.Equal("Channel One", item.ChannelName);
         Assert.Equal("https://example.com/UC1-default.jpg", item.ChannelThumbnailUrl);
         Assert.Equal("UU-UC1", item.UploadsPlaylistId);
+        Assert.Equal(1_500, item.SubscriberCount);
 
         var channelsUri = Assert.Single(handler.RequestUris);
         Assert.StartsWith("https://www.googleapis.com/youtube/v3/channels?", channelsUri);
         Assert.Equal("snippet,contentDetails", QueryValue(channelsUri, "part"));
         Assert.Equal("UC1", QueryValue(channelsUri, "id"));
         Assert.Equal("real-key", QueryValue(channelsUri, "key"));
+    }
+
+    [Fact]
+    public async Task Metadata_lookup_requests_channel_statistics()
+    {
+        var responses = new Queue<HttpResponseMessage>([
+            Json(ChannelsResponseJson([("UC1", "Channel One")]))
+        ]);
+        var (client, handler) = CreateClient("real-key", _ => responses.Dequeue());
+
+        await client.GetChannelMetadataAsync(["UC1"], CancellationToken.None);
+
+        var channelsUri = Assert.Single(handler.RequestUris);
+        Assert.Equal("snippet,contentDetails,statistics", QueryValue(channelsUri, "part"));
+    }
+
+    [Fact]
+    public async Task Metadata_lookup_hides_subscriber_count_when_the_channel_hides_it()
+    {
+        var (client, _) = CreateClient(
+            "real-key",
+            _ => Json("""{"items":[{"id":"UC1","snippet":{"title":"Channel One"},"statistics":{"subscriberCount":"1500","hiddenSubscriberCount":true}}]}"""));
+
+        var result = await client.GetChannelMetadataAsync(["UC1"], CancellationToken.None);
+
+        var item = Assert.Single(result.Items);
+        Assert.Null(item.SubscriberCount);
     }
 
     [Fact]
@@ -299,7 +327,8 @@ public class YouTubeChannelDiscoveryClientTests
         "\"snippet\":{\"title\":\"" + channel.Title + "\",\"thumbnails\":{\"default\":{\"url\":\"https://example.com/" +
         channel.ChannelId + "-default.jpg\"},\"high\":{\"url\":\"https://example.com/" +
         channel.ChannelId + "-high.jpg\"}}}," +
-        "\"contentDetails\":{\"relatedPlaylists\":{\"uploads\":\"UU-" + channel.ChannelId + "\"}}}";
+        "\"contentDetails\":{\"relatedPlaylists\":{\"uploads\":\"UU-" + channel.ChannelId + "\"}}," +
+        "\"statistics\":{\"subscriberCount\":\"1500\",\"hiddenSubscriberCount\":false}}";
 
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)
         : HttpMessageHandler

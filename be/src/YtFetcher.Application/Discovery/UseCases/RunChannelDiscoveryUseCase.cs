@@ -192,7 +192,8 @@ public sealed class RunChannelDiscoveryUseCase(
                         item.YouTubeVideoId,
                         item.VideoTitle,
                         item.VideoThumbnailUrl,
-                        item.VideoPublishedAt));
+                        item.VideoPublishedAt,
+                        metadata.SubscriberCount));
                 }
 
                 var persistResult = await discoveryRepository.PersistKeywordDiscoveryAsync(

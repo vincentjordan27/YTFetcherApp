@@ -49,6 +49,7 @@ public class DiscoveryRepositoryTests
         Assert.Equal(Now, channel.ModifiedAt);
         Assert.Equal(User.SystemUserId, channel.CreatedByUserId);
         Assert.Equal(User.SystemUserId, channel.ModifiedByUserId);
+        Assert.Equal(1_234, channel.SubscriberCount);
 
         var discovery = await context.ChannelDiscoveries.SingleAsync();
         Assert.Equal(channel.Id, discovery.ChannelId);
@@ -80,6 +81,7 @@ public class DiscoveryRepositoryTests
             YoutubeChannelId = "UC-existing",
             Name = "Old name",
             ThumbnailUrl = "https://example.com/old.jpg",
+            SubscriberCount = 900,
             Status = ChannelStatus.APPROVED,
             ApprovedAt = Older,
             ApprovedByUserId = null,
@@ -105,6 +107,7 @@ public class DiscoveryRepositoryTests
         Assert.Equal("Channel UC-existing", refreshed.Name);
         Assert.Equal("https://example.com/UC-existing.jpg", refreshed.ThumbnailUrl);
         Assert.Equal("UU-UC-existing", refreshed.UploadsPlaylistId);
+        Assert.Equal(900, refreshed.SubscriberCount);
         Assert.Equal(ChannelStatus.APPROVED, refreshed.Status);
         Assert.Equal(Older, refreshed.ApprovedAt);
         Assert.Equal(BackfillStatus.COMPLETED, refreshed.BackfillStatus);
@@ -276,5 +279,6 @@ public class DiscoveryRepositoryTests
         videoId,
         $"Video {videoId}",
         $"https://example.com/{videoId}.jpg",
-        Older);
+        Older,
+        1_234);
 }

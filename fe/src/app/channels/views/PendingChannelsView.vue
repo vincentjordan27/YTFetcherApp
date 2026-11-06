@@ -42,7 +42,6 @@ const {
   toggleVisibleSelection,
 } = usePendingChannelReview()
 
-// The manual-add dialog reloads the pending page and the shared tab counts on success.
 const {
   isOpen: isManualDialogOpen,
   channelReference: manualChannelReference,
@@ -63,22 +62,16 @@ const {
         :search-query="searchInput"
         search-label="Filter by name or channel ID"
         show-add-channel
+        :show-collapse-evidence="Boolean(expandedEvidenceId)"
         :selected-count="selectedCount"
         show-approve-selection
         show-reject-selection
         @update:search-query="updateSearchInput"
         @add-channel="openManualDialog"
+        @collapse-evidence="closeEvidence"
         @approve-selection="openSelectedAction('approve')"
         @reject-selection="openSelectedAction('reject')"
       />
-      <button
-        v-if="expandedEvidenceId"
-        type="button"
-        class="pending-channels__collapse-evidence"
-        @click="closeEvidence"
-      >
-        Collapse evidence
-      </button>
       <div class="pending-channels__ledger">
         <ChannelReviewTable
           variant="pending"
@@ -129,22 +122,4 @@ const {
 
 <style lang="scss" scoped>
 @use '@/app/channels/styles/channel-review-ledger';
-
-.pending-channels__collapse-evidence {
-  align-self: flex-end;
-  padding: 7px 12px;
-  border: 1px solid #d8d8d8;
-  border-radius: 8px;
-  background: #fff;
-  color: #0f0f0f;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.pending-channels__collapse-evidence:hover {
-  background: #f8f8f8;
-  border-color: #bdbdbd;
-}
 </style>

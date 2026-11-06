@@ -16,6 +16,8 @@ internal sealed class ChannelItem
     public ChannelSnippet? Snippet { get; set; }
 
     public ChannelContentDetails? ContentDetails { get; set; }
+
+    public ChannelStatistics? Statistics { get; set; }
 }
 
 internal sealed class ChannelSnippet
@@ -33,4 +35,11 @@ internal sealed class ChannelContentDetails
 internal sealed class RelatedPlaylists
 {
     public string? Uploads { get; set; }
+}
+
+internal sealed class ChannelStatistics
+{
+    public System.Text.Json.JsonElement? SubscriberCount { get; set; }
+
+    public bool? HiddenSubscriberCount { get; set; }
 }

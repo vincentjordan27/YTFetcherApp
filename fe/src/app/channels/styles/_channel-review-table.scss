@@ -4,7 +4,7 @@
 }
 
 .channel-review-table :deep(.app-data-table) {
-  min-width: 1080px;
+  min-width: 1160px;
   text-align: left;
 }
 
@@ -264,6 +264,13 @@
 
 .channel-review-table__date--muted {
   color: #606060;
+}
+
+.channel-review-table__subscriber-count {
+  color: #606060;
+  font-size: 12px !important;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .channel-review-table__actions {

@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import AppTabs from '@/common/components/AppTabs.vue'
 import type { ChannelTab } from '@/app/channels/types/channel-review'
 
-defineProps<{
+const props = defineProps<{
   tabs: readonly ChannelTab[]
   searchQuery: string
   searchLabel: string
   showAddChannel?: boolean
+  showCollapseEvidence?: boolean
   selectedCount?: number
   showApproveSelection?: boolean
   showRejectSelection?: boolean
@@ -16,12 +17,14 @@ defineProps<{
 const emit = defineEmits<{
   'update:searchQuery': [value: string]
   'add-channel': []
+  'collapse-evidence': []
   'approve-selection': []
   'reject-selection': []
 }>()
 
 const reviewMenuOpen = ref(false)
 const reviewMenuRef = ref<HTMLElement | null>(null)
+const hasReviewMenu = computed(() => Boolean(props.selectedCount && (props.showApproveSelection || props.showRejectSelection)))
 
 function toggleReviewMenu(): void {
   reviewMenuOpen.value = !reviewMenuOpen.value
@@ -73,7 +76,8 @@ onBeforeUnmount(() => {
       class="channel-review-toolbar__filters"
       :class="{
         'channel-review-toolbar__filters--with-add': showAddChannel,
-        'channel-review-toolbar__filters--with-review': selectedCount && (showApproveSelection || showRejectSelection),
+        'channel-review-toolbar__filters--with-collapse': showCollapseEvidence,
+        'channel-review-toolbar__filters--with-review': hasReviewMenu,
       }"
     >
       <label class="channel-review-toolbar__search">
@@ -100,8 +104,16 @@ onBeforeUnmount(() => {
         </svg>
         <span>Add channel</span>
       </button>
+      <button
+        v-if="showCollapseEvidence"
+        type="button"
+        class="channel-review-toolbar__collapse-evidence"
+        @click="emit('collapse-evidence')"
+      >
+        Collapse evidence
+      </button>
       <div
-        v-if="selectedCount && (showApproveSelection || showRejectSelection)"
+        v-if="hasReviewMenu"
         ref="reviewMenuRef"
         class="channel-review-toolbar__review-menu"
       >

@@ -8,11 +8,6 @@ const ADDED_MESSAGE = 'Channel added and approved. Backfill will start automatic
 const SCHEDULING_FAILURE_MESSAGE = 'Channel added, but backfill scheduling needs retry.'
 const UNEXPECTED_FAILURE_MESSAGE = "Couldn't add the channel. Check your connection and try again."
 
-/**
- * Dialog state and the single submit lifecycle for adding one channel by `@handle`. It owns the
- * field value, the in-flight guard, the API-error mapping, and the success toast. The page supplies
- * the reload callback that refreshes the pending list and the shared review tab counts.
- */
 export function useManualChannelApproval(onAdded: () => Promise<void>) {
   const isOpen = ref(false)
   const channelReference = ref('')
@@ -54,7 +49,6 @@ export function useManualChannelApproval(onAdded: () => Promise<void>) {
       const detail = await manualApproveChannel(channelReference.value.trim())
       backfillStatus = detail.backfillStatus
     } catch (caught) {
-      // Keep the dialog open so the readable server message stays visible.
       error.value = manualAddErrorMessage(caught)
       pending.value = false
       return
@@ -83,10 +77,6 @@ export function useManualChannelApproval(onAdded: () => Promise<void>) {
   }
 }
 
-/**
- * Surfaces the server's readable message for a `400`, `404`, or `409`, and the established generic
- * fallback for anything unexpected. Provider detail is never shown.
- */
 function manualAddErrorMessage(caught: unknown): string {
   if (caught instanceof ApiError && typeof caught.body === 'object' && caught.body !== null) {
     const problem = caught.body as ApiValidationProblem

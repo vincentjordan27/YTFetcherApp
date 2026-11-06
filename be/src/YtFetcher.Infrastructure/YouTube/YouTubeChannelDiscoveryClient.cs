@@ -131,7 +131,10 @@ public sealed class YouTubeChannelDiscoveryClient(
                 channel.Id,
                 channel.Snippet.Title,
                 BestChannelThumbnailUrl(channel.Snippet.Thumbnails),
-                channel.ContentDetails?.RelatedPlaylists?.Uploads));
+                channel.ContentDetails?.RelatedPlaylists?.Uploads,
+                channel.Statistics?.HiddenSubscriberCount is true
+                    ? null
+                    : ReadSubscriberCount(channel.Statistics?.SubscriberCount)));
         }
 
         return YouTubeChannelMetadataResult.Completed(metadata);
@@ -197,9 +200,28 @@ public sealed class YouTubeChannelDiscoveryClient(
     }
 
     private static string BuildChannelsUri(YouTubeChannelsListRequest request) =>
-        "channels?part=snippet,contentDetails" +
+        "channels?part=snippet,contentDetails,statistics" +
         $"&id={string.Join(',', request.ChannelIds)}" +
         $"&key={Uri.EscapeDataString(request.ApiKey)}";
+
+    private static long? ReadSubscriberCount(JsonElement? element)
+    {
+        if (element is not { } value)
+        {
+            return null;
+        }
+
+        return value.ValueKind switch
+        {
+            JsonValueKind.Number when value.TryGetInt64(out var number) && number >= 0 => number,
+            JsonValueKind.String when long.TryParse(
+                value.GetString(),
+                NumberStyles.Integer,
+                CultureInfo.InvariantCulture,
+                out var number) && number >= 0 => number,
+            _ => null
+        };
+    }
 
     private static bool TryParseSearchItem(SearchItem item, out ParsedSearchItem parsed)
     {

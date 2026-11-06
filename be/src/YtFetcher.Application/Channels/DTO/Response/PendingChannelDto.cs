@@ -9,7 +9,8 @@ public sealed record PendingChannelDto(
     string Name,
     string? ThumbnailUrl,
     DateTimeOffset DiscoveredAt,
-    int EvidenceCount)
+    int EvidenceCount,
+    long? SubscriberCount)
 {
     public static PendingChannelDto ToDto(Channel channel, int evidenceCount) => new(
         channel.Id,
@@ -17,5 +18,6 @@ public sealed record PendingChannelDto(
         channel.Name,
         channel.ThumbnailUrl,
         channel.DiscoveredAt,
-        evidenceCount);
+        evidenceCount,
+        channel.SubscriberCount);
 }

@@ -10,7 +10,6 @@ const CONFLICT_MESSAGE = 'This channel is no longer rejected. Refresh the list a
 const FALLBACK_MESSAGE = "Couldn't reopen the channel. Check your connection and try again."
 const SUCCESS_MESSAGE = 'Channel returned to pending review.'
 
-/** Reopens one rejected channel without starting another quota-consuming backfill. */
 export function useRejectedChannelReopen(onSettled: () => Promise<void>) {
   const reopeningChannelId = ref<string | null>(null)
   const { showToast } = useToast()

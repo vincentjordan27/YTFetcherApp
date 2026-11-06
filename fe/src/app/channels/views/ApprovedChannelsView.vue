@@ -27,7 +27,6 @@ const {
   reload,
 } = useChannelLedger('approved')
 
-// Approved-channel rejection: the dialog reloads the ledger and the shared tab counts on settle.
 async function refreshLedger(): Promise<void> {
   await reload()
   await loadReviewCounts()
@@ -58,8 +57,6 @@ function handleOpenAction(kind: ChannelDialogKind, channel: ChannelReviewRow): v
   }
 }
 
-// The only interactive element of the backfill status cell: a read-only detail dialog. Retrying failed
-// page work moved to the Backfill runs page, which owns the terminal-failure retry.
 const failedChannel = ref<ChannelReviewRow | null>(null)
 
 function openFailureDialog(channel: ChannelReviewRow): void {

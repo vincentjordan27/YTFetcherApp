@@ -26,6 +26,7 @@ public class ChannelEndpointTests
 
         var oldest = PendingChannel("UC-oldest", SeedTime);
         var newest = PendingChannel("UC-newest", SeedTime.AddDays(60));
+        newest.SubscriberCount = 12_300;
         var approved = PendingChannel("UC-approved", SeedTime.AddDays(30));
         approved.Status = ChannelStatus.APPROVED;
         approved.ApprovedAt = approved.DiscoveredAt;
@@ -53,6 +54,7 @@ public class ChannelEndpointTests
             first => Assert.Equal(newest.Id, first.Id),
             second => Assert.Equal(oldest.Id, second.Id));
         Assert.All(payload.Items, item => Assert.Equal(0, item.EvidenceCount));
+        Assert.Equal(12_300, payload.Items[0].SubscriberCount);
     }
 
     [Fact]
@@ -801,7 +803,8 @@ public class ChannelEndpointTests
         string Name,
         string? ThumbnailUrl,
         DateTimeOffset DiscoveredAt,
-        int EvidenceCount);
+        int EvidenceCount,
+        long? SubscriberCount);
 
     private sealed record ChannelEvidenceResponse(IReadOnlyList<ChannelEvidenceItemResponse> Items);
 

@@ -11,4 +11,5 @@ public sealed record YouTubeChannelCandidate(
     string YouTubeVideoId,
     string VideoTitle,
     string? VideoThumbnailUrl,
-    DateTimeOffset VideoPublishedAt);
+    DateTimeOffset VideoPublishedAt,
+    long? SubscriberCount = null);

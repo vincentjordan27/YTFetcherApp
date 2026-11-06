@@ -1,18 +1,11 @@
 import type { ChannelPaginationDesign } from '@/app/channels/types/channel-review'
 
-/** Every ledger starts on page one. */
 export const CHANNEL_INITIAL_PAGE = 1
 
-/** Debounce applied to the ledger search boxes. */
 export const CHANNEL_SEARCH_DEBOUNCE_MS = 300
 
-/** Above this page count the pagination collapses its middle range into ellipses. */
 const MAX_DISPLAYED_PAGES = 7
 
-/**
- * Builds the pagination view model for a channel ledger. It is the one pure calculation shared by the
- * pending ledger and the approved/rejected ledger, so their summary and ellipsis behavior cannot drift.
- */
 export function buildChannelPagination(
   page: number,
   pageSize: number,

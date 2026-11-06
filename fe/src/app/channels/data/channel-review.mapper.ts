@@ -4,7 +4,6 @@ import type { PendingChannelItem } from '@/app/channels/api/types/pending-channe
 import type { RejectedChannelItem } from '@/app/channels/api/types/rejected-channels'
 import type { ChannelBackfillTone, ChannelEvidenceView, ChannelReviewRow } from '@/app/channels/types/channel-review'
 
-/** Shown when a nullable API value has no data yet. */
 export const EMPTY_DISPLAY = '—'
 
 const dateFormatter = new Intl.DateTimeFormat('en-GB', {
@@ -28,7 +27,6 @@ const BACKFILL_TONES: Readonly<Record<string, { label: string; tone: ChannelBack
   SCHEDULING_FAILED: { label: 'Scheduling failed', tone: 'schedulingFailed' },
 }
 
-/** Formats an API timestamp with the approved visual baseline shape, for example `16 Sep 2026, 14:30`. */
 export function formatChannelDateTime(value: string): string {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) {
@@ -46,10 +44,6 @@ function toYoutubeChannelUrl(youtubeChannelId: string): string {
   return `https://www.youtube.com/channel/${youtubeChannelId}`
 }
 
-/**
- * Maps a pending channel from the API to a ledger row. The real YouTube channel ID is the secondary
- * identity text, so no handle is fabricated.
- */
 export function toPendingChannelRow(item: PendingChannelItem): ChannelReviewRow {
   return {
     id: item.id,
@@ -61,10 +55,10 @@ export function toPendingChannelRow(item: PendingChannelItem): ChannelReviewRow 
     discoveredAt: formatChannelDateTime(item.discoveredAt),
     backfillLabel: 'Pending',
     evidenceCount: item.evidenceCount,
+    subscriberCount: item.subscriberCount,
   }
 }
 
-/** Maps an approved channel. Backfill labels are the persisted BackfillStatus values. */
 export function toApprovedChannelRow(item: ApprovedChannelItem): ChannelReviewRow {
   const backfill = BACKFILL_TONES[item.backfillStatus] ?? { label: item.backfillStatus, tone: 'pending' }
 
@@ -88,7 +82,6 @@ export function toApprovedChannelRow(item: ApprovedChannelItem): ChannelReviewRo
   }
 }
 
-/** Maps a rejected channel. The rejection reason is the row title; there is no detail value. */
 export function toRejectedChannelRow(item: RejectedChannelItem): ChannelReviewRow {
   return {
     id: item.id,

@@ -78,8 +78,16 @@ function isSelected(channelId: string): boolean {
 }
 
 function columnCount(): number {
-  const base = props.variant === 'pending' ? 7 : props.variant === 'approved' ? 7 : 6
+  const base = props.variant === 'pending' ? 8 : props.variant === 'approved' ? 7 : 6
   return props.selectionEnabled ? base + 1 : base
+}
+
+function formatSubscriberCount(value: number | null | undefined): string {
+  if (value === null || value === undefined) {
+    return '—'
+  }
+
+  return new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 }
 </script>
 
@@ -101,6 +109,7 @@ function columnCount(): number {
             <span class="sr-only">Discovery evidence</span>
           </th>
           <th scope="col">Channel</th>
+          <th v-if="variant === 'pending'" scope="col">Subscribers</th>
           <th scope="col">Status</th>
           <th scope="col">Discovery date</th>
           <th v-if="variant === 'pending'" scope="col">Backfill status</th>
@@ -205,6 +214,9 @@ function columnCount(): number {
                 <span class="channel-review-table__handle">{{ channel.handle }}</span>
               </span>
             </div>
+          </td>
+          <td v-if="variant === 'pending'" class="channel-review-table__subscriber-count">
+            {{ formatSubscriberCount(channel.subscriberCount) }}
           </td>
           <td><span class="channel-review-table__status" :class="`channel-review-table__status--${variant}`"><span />{{ channel.statusLabel }}</span></td>
           <td class="channel-review-table__date channel-review-table__date--muted">{{ channel.discoveredAt }}</td>

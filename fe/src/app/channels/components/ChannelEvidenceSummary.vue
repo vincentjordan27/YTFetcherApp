@@ -2,7 +2,6 @@
 withDefaults(
   defineProps<{
     count?: number
-    /** True while this row's evidence panel is open. Drives the highlight only. */
     active?: boolean
   }>(),
   { active: false },

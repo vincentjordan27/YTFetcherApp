@@ -81,6 +81,10 @@ public sealed class DiscoveryRepository(YtFetcherDbContext dbContext) : IDiscove
                     existingChannel.Name = metadata.ChannelName;
                     existingChannel.ThumbnailUrl = metadata.ChannelThumbnailUrl;
                     existingChannel.UploadsPlaylistId = metadata.UploadsPlaylistId;
+                    if (existingChannel.Status == ChannelStatus.PENDING)
+                    {
+                        existingChannel.SubscriberCount = metadata.SubscriberCount;
+                    }
                     existingChannel.ModifiedAt = utcNow;
                     existingChannel.ModifiedByUserId = User.SystemUserId;
 
@@ -96,6 +100,7 @@ public sealed class DiscoveryRepository(YtFetcherDbContext dbContext) : IDiscove
                     Name = metadata.ChannelName,
                     ThumbnailUrl = metadata.ChannelThumbnailUrl,
                     UploadsPlaylistId = metadata.UploadsPlaylistId,
+                    SubscriberCount = metadata.SubscriberCount,
                     Status = ChannelStatus.PENDING,
                     BackfillStatus = BackfillStatus.PENDING,
                     IsDeleted = false,
