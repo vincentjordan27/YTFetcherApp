@@ -5,6 +5,7 @@ import ChannelEvidenceSummary from '@/app/channels/components/ChannelEvidenceSum
 import PendingChannelEvidence from '@/app/channels/components/PendingChannelEvidence.vue'
 import ChannelRejectionReason from '@/app/channels/components/ChannelRejectionReason.vue'
 import ChannelReviewActionMenu from '@/app/channels/components/ChannelReviewActionMenu.vue'
+import { toPendingChannelAriaSort, toPendingChannelSortAriaLabel } from '@/app/channels/data/pending-channel-sort'
 import type {
   ChannelDialogKind,
   ChannelEvidenceState,
@@ -12,6 +13,7 @@ import type {
   ChannelReviewVariant,
   ChannelTableState,
 } from '@/app/channels/types/channel-review'
+import type { PendingChannelSort, PendingChannelSortField } from '@/app/channels/types/pending-channel-sort'
 import { computed, ref } from 'vue'
 
 const props = withDefaults(
@@ -25,6 +27,7 @@ const props = withDefaults(
     reopeningChannelId?: string | null
     selectedIds?: readonly string[]
     selectionEnabled?: boolean
+    sort?: PendingChannelSort
   }>(),
   {
     expandedEvidenceId: null,
@@ -45,6 +48,7 @@ const emit = defineEmits<{
   reopen: [channel: ChannelReviewRow]
   'toggle-selection': [channelId: string]
   'toggle-visible-selection': []
+  'set-sort': [field: PendingChannelSortField]
   retry: []
 }>()
 
@@ -108,14 +112,76 @@ function formatSubscriberCount(value: number | null | undefined): string {
           <th v-if="variant === 'pending'" class="channel-review-table__expand-column" scope="col">
             <span class="sr-only">Discovery evidence</span>
           </th>
-          <th scope="col">Channel</th>
-          <th v-if="variant === 'pending'" scope="col">Subscribers</th>
+          <th
+            scope="col"
+            :aria-sort="variant === 'pending' && sort ? toPendingChannelAriaSort(sort, 'name') : undefined"
+          >
+            <button
+              v-if="variant === 'pending' && sort"
+              type="button"
+              class="channel-review-table__sort"
+              :aria-label="toPendingChannelSortAriaLabel('name')"
+              @click.stop="emit('set-sort', 'name')"
+            >
+              Channel
+              <span v-if="sort.field === 'name'" class="channel-review-table__sort-icon" :class="{ 'channel-review-table__sort-icon--desc': sort.direction === 'desc' }" aria-hidden="true" />
+            </button>
+            <template v-else>Channel</template>
+          </th>
+          <th
+            v-if="variant === 'pending'"
+            scope="col"
+            :aria-sort="sort ? toPendingChannelAriaSort(sort, 'subscriberCount') : undefined"
+          >
+            <button
+              v-if="sort"
+              type="button"
+              class="channel-review-table__sort"
+              :aria-label="toPendingChannelSortAriaLabel('subscriberCount')"
+              @click.stop="emit('set-sort', 'subscriberCount')"
+            >
+              Subscribers
+              <span v-if="sort.field === 'subscriberCount'" class="channel-review-table__sort-icon" :class="{ 'channel-review-table__sort-icon--desc': sort.direction === 'desc' }" aria-hidden="true" />
+            </button>
+            <template v-else>Subscribers</template>
+          </th>
           <th scope="col">Status</th>
-          <th scope="col">Discovery date</th>
+          <th
+            scope="col"
+            :aria-sort="variant === 'pending' && sort ? toPendingChannelAriaSort(sort, 'discoveredAt') : undefined"
+          >
+            <button
+              v-if="variant === 'pending' && sort"
+              type="button"
+              class="channel-review-table__sort"
+              :aria-label="toPendingChannelSortAriaLabel('discoveredAt')"
+              @click.stop="emit('set-sort', 'discoveredAt')"
+            >
+              Discovery date
+              <span v-if="sort.field === 'discoveredAt'" class="channel-review-table__sort-icon" :class="{ 'channel-review-table__sort-icon--desc': sort.direction === 'desc' }" aria-hidden="true" />
+            </button>
+            <template v-else>Discovery date</template>
+          </th>
           <th v-if="variant === 'pending'" scope="col">Backfill status</th>
           <th v-else-if="variant === 'approved'" scope="col">Approved date</th>
           <th v-else scope="col">Rejected date</th>
-          <th v-if="variant === 'pending'" scope="col">Evidence Shorts</th>
+          <th
+            v-if="variant === 'pending'"
+            scope="col"
+            :aria-sort="sort ? toPendingChannelAriaSort(sort, 'evidenceCount') : undefined"
+          >
+            <button
+              v-if="sort"
+              type="button"
+              class="channel-review-table__sort"
+              :aria-label="toPendingChannelSortAriaLabel('evidenceCount')"
+              @click.stop="emit('set-sort', 'evidenceCount')"
+            >
+              Evidence Shorts
+              <span v-if="sort.field === 'evidenceCount'" class="channel-review-table__sort-icon" :class="{ 'channel-review-table__sort-icon--desc': sort.direction === 'desc' }" aria-hidden="true" />
+            </button>
+            <template v-else>Evidence Shorts</template>
+          </th>
           <template v-else-if="variant === 'approved'">
             <th scope="col">Backfill status</th>
             <th scope="col">Last upload check</th>

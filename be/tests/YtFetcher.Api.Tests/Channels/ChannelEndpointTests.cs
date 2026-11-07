@@ -58,6 +58,58 @@ public class ChannelEndpointTests
     }
 
     [Fact]
+    public async Task Pending_list_sorts_before_paging_by_supported_pending_columns()
+    {
+        using var databaseConfiguration = new HostConfigurationScope();
+        using var application = new ChannelApiFactory();
+
+        var alpha = PendingChannel("UC-alpha", SeedTime.AddDays(2));
+        alpha.Name = "Alpha channel";
+        alpha.SubscriberCount = 100;
+        var bravo = PendingChannel("UC-bravo", SeedTime.AddDays(1));
+        bravo.Name = "Bravo channel";
+        bravo.SubscriberCount = 1_000;
+        var hidden = PendingChannel("UC-hidden", SeedTime.AddDays(3));
+        hidden.Name = "Hidden channel";
+
+        await SeedAsync(application, alpha, bravo, hidden);
+        var keyword = Keyword("sorting");
+        await SeedEvidenceAsync(
+            application,
+            [keyword],
+            [
+                Evidence(alpha, keyword, "sort-alpha-1", SeedTime),
+                Evidence(bravo, keyword, "sort-bravo-1", SeedTime),
+                Evidence(bravo, keyword, "sort-bravo-2", SeedTime),
+            ]);
+
+        var client = application.CreateClient();
+
+        var byName = await ListPendingAsync(client, sortBy: "Name", sortDirection: "Asc");
+        Assert.NotNull(byName);
+        Assert.Equal([alpha.Id, bravo.Id, hidden.Id], byName.Items.Select(item => item.Id));
+
+        var bySubscriberCount = await ListPendingAsync(client, sortBy: "SubscriberCount", sortDirection: "Desc");
+        Assert.NotNull(bySubscriberCount);
+        Assert.Equal([bravo.Id, alpha.Id, hidden.Id], bySubscriberCount.Items.Select(item => item.Id));
+
+        var byEvidence = await ListPendingAsync(client, sortBy: "EvidenceCount", sortDirection: "Desc");
+        Assert.NotNull(byEvidence);
+        Assert.Equal([bravo.Id, alpha.Id, hidden.Id], byEvidence.Items.Select(item => item.Id));
+
+        var byDiscoveryDate = await ListPendingAsync(client, sortBy: "DiscoveredAt", sortDirection: "Asc");
+        Assert.NotNull(byDiscoveryDate);
+        Assert.Equal([bravo.Id, alpha.Id, hidden.Id], byDiscoveryDate.Items.Select(item => item.Id));
+
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            (await PostPendingListAsync(client, 1, 20, sortBy: "Unknown", sortDirection: "Asc")).StatusCode);
+        Assert.Equal(
+            HttpStatusCode.BadRequest,
+            (await PostPendingListAsync(client, 1, 20, sortBy: "Name", sortDirection: "Sideways")).StatusCode);
+    }
+
+    [Fact]
     public async Task Pending_pagination_uses_defaults_and_rejects_invalid_values()
     {
         using var databaseConfiguration = new HostConfigurationScope();
@@ -746,15 +798,19 @@ public class ChannelEndpointTests
         HttpClient client,
         int page,
         int pageSize,
-        string? searchText = null) =>
-        client.PostAsJsonAsync("/api/channels/pending/list", new { page, pageSize, searchText });
+        string? searchText = null,
+        string? sortBy = null,
+        string? sortDirection = null) =>
+        client.PostAsJsonAsync("/api/channels/pending/list", new { page, pageSize, searchText, sortBy, sortDirection });
 
     private static async Task<PendingChannelsResponse?> ListPendingAsync(
         HttpClient client,
         int page = 1,
         int pageSize = 20,
-        string? searchText = null) =>
-        await (await PostPendingListAsync(client, page, pageSize, searchText))
+        string? searchText = null,
+        string? sortBy = null,
+        string? sortDirection = null) =>
+        await (await PostPendingListAsync(client, page, pageSize, searchText, sortBy, sortDirection))
             .Content.ReadFromJsonAsync<PendingChannelsResponse>();
 
     /// <summary>Soft delete is a non-GET action, so it sends an empty JSON body.</summary>

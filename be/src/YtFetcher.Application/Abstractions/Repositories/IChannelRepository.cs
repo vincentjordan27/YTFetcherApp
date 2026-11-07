@@ -1,4 +1,5 @@
 using YtFetcher.Application.Channels.DTO.Result;
+using YtFetcher.Application.Channels.DTO.Request;
 using YtFetcher.Core.Channels;
 using YtFetcher.Core.Discovery;
 
@@ -24,6 +25,8 @@ public interface IChannelRepository
         int page,
         int pageSize,
         string? searchText,
+        PendingChannelSortBy sortBy,
+        ChannelSortDirection sortDirection,
         CancellationToken cancellationToken);
 
     /// <summary>Counts the non-deleted pending channels that match the optional search text.</summary>

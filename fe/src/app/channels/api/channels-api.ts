@@ -26,6 +26,8 @@ export function getPendingChannels(request: PendingChannelsRequest): Promise<Pen
     page: request.page,
     pageSize: request.pageSize,
     searchText: request.query ?? null,
+    sortBy: request.sortBy,
+    sortDirection: request.sortDirection,
   }
 
   return apiRequest<PendingChannelsResponse>('/api/channels/pending/list', {

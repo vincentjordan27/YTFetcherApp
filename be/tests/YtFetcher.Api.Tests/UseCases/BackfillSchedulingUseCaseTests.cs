@@ -2,6 +2,7 @@ using YtFetcher.Core.BackfillRuns;
 using YtFetcher.Application.Abstractions.Repositories;
 using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Backfill.UseCases;
+using YtFetcher.Application.Channels.DTO.Request;
 using YtFetcher.Application.Channels.DTO.Result;
 using YtFetcher.Core.Channels;
 using YtFetcher.Core.Discovery;
@@ -210,6 +211,8 @@ public class BackfillSchedulingUseCaseTests
             int page,
             int pageSize,
             string? searchText,
+            PendingChannelSortBy sortBy,
+            ChannelSortDirection sortDirection,
             CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 

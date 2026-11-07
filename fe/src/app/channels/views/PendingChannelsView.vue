@@ -13,6 +13,7 @@ const {
   searchInput,
   rowsPerPage,
   currentPage,
+  sort,
   rows,
   tabs,
   pagination,
@@ -29,6 +30,7 @@ const {
   updateSearchInput,
   goToPage,
   updateRowsPerPage,
+  setSort,
   retry,
   refresh,
   toggleEvidence,
@@ -76,6 +78,7 @@ const {
         <ChannelReviewTable
           variant="pending"
           :rows="rows"
+          :sort="sort"
           :expanded-evidence-id="expandedEvidenceId"
           :state="tableState.state"
           :state-message="tableState.message"
@@ -85,6 +88,7 @@ const {
           @toggle-evidence="toggleEvidence"
           @toggle-selection="toggleRowSelection"
           @toggle-visible-selection="toggleVisibleSelection"
+          @set-sort="setSort"
           @open-action="openActionDialog"
           @retry="retry"
         />

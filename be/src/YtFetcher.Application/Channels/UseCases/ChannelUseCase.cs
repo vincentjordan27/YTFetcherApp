@@ -20,6 +20,8 @@ public sealed class ChannelUseCase(
     IYouTubeChannelLookupGateway youTubeChannelLookupGateway,
     ICurrentActor currentActor) : IChannelUseCase
 {
+    private const PendingChannelSortBy DefaultPendingSortBy = PendingChannelSortBy.DiscoveredAt;
+    private const ChannelSortDirection DefaultSortDirection = ChannelSortDirection.Desc;
     /// <summary>Number of newest evidence rows the review page shows per channel.</summary>
     private const int EvidenceLimit = 5;
 
@@ -38,12 +40,16 @@ public sealed class ChannelUseCase(
         CancellationToken cancellationToken)
     {
         var searchText = NormalizeSearchText(request.SearchText);
+        var sortBy = ParseSortValue(request.SortBy, DefaultPendingSortBy);
+        var sortDirection = ParseSortValue(request.SortDirection, DefaultSortDirection);
 
         // The repository returns Core entities plus counts; building the response is an Application concern.
         var channels = await channelRepository.GetPendingPageAsync(
             request.Page,
             request.PageSize,
             searchText,
+            sortBy,
+            sortDirection,
             cancellationToken);
 
         var totalCount = await channelRepository.CountPendingAsync(searchText, cancellationToken);
@@ -544,6 +550,12 @@ public sealed class ChannelUseCase(
         var trimmed = searchText?.Trim();
         return string.IsNullOrEmpty(trimmed) ? null : trimmed;
     }
+
+    private static TEnum ParseSortValue<TEnum>(string? value, TEnum fallback)
+        where TEnum : struct, Enum =>
+        string.IsNullOrWhiteSpace(value)
+            ? fallback
+            : Enum.Parse<TEnum>(value, ignoreCase: true);
 
     private static ChannelMutationResponse Conflict(Channel channel) =>
         new(

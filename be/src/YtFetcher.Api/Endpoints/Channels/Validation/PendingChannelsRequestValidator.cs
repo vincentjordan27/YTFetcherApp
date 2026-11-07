@@ -16,5 +16,15 @@ public sealed class PendingChannelsRequestValidator : AbstractValidator<PendingC
             .InclusiveBetween(1, 100)
             .WithMessage("pageSize must be between 1 and 100.")
             .OverridePropertyName("pageSize");
+
+        RuleFor(request => request.SortBy)
+            .Must(value => value is null || Enum.GetNames<PendingChannelSortBy>().Contains(value, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("sortBy is not supported.")
+            .OverridePropertyName("sortBy");
+
+        RuleFor(request => request.SortDirection)
+            .Must(value => value is null || Enum.GetNames<ChannelSortDirection>().Contains(value, StringComparer.OrdinalIgnoreCase))
+            .WithMessage("sortDirection is not supported.")
+            .OverridePropertyName("sortDirection");
     }
 }

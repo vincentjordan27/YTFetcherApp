@@ -18,6 +18,41 @@
   white-space: nowrap;
 }
 
+.channel-review-table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.channel-review-table__sort:hover {
+  color: #ff0033;
+}
+
+.channel-review-table__sort:focus-visible {
+  outline: 2px solid #ff0033;
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+.channel-review-table__sort-icon {
+  width: 0;
+  height: 0;
+  border-right: 4px solid transparent;
+  border-bottom: 5px solid currentColor;
+  border-left: 4px solid transparent;
+}
+
+.channel-review-table__sort-icon--desc {
+  border-top: 5px solid currentColor;
+  border-bottom: 0;
+}
+
 .channel-review-table :deep(td) {
   padding: 14px 16px;
   color: #0f0f0f;

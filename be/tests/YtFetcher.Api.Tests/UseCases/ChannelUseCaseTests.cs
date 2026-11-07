@@ -835,6 +835,8 @@ public class ChannelUseCaseTests
             int page,
             int pageSize,
             string? searchText,
+            PendingChannelSortBy sortBy,
+            ChannelSortDirection sortDirection,
             CancellationToken cancellationToken)
         {
             ReceivedPage = page;

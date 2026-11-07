@@ -1,13 +1,19 @@
+import type { PendingChannelSortDirection, PendingChannelSortField } from '@/app/channels/types/pending-channel-sort'
+
 export interface PendingChannelsRequest {
   readonly page: number
   readonly pageSize: number
   readonly query?: string
+  readonly sortBy: PendingChannelSortField
+  readonly sortDirection: PendingChannelSortDirection
 }
 
 export interface PendingChannelsListBody {
   readonly page: number
   readonly pageSize: number
   readonly searchText: string | null
+  readonly sortBy: string
+  readonly sortDirection: string
 }
 
 export interface PendingChannelsResponse {

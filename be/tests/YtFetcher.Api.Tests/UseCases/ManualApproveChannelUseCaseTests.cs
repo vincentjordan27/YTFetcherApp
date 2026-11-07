@@ -464,6 +464,8 @@ public class ManualApproveChannelUseCaseTests
             int page,
             int pageSize,
             string? searchText,
+            PendingChannelSortBy sortBy,
+            ChannelSortDirection sortDirection,
             CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 

@@ -2,6 +2,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { approveChannels, getChannelEvidence, getPendingChannels, rejectChannels } from '@/app/channels/api/channels-api'
 import type { ApiValidationProblem } from '@/app/channels/api/types/api-error'
 import { toChannelEvidenceView, toPendingChannelRow } from '@/app/channels/data/channel-review.mapper'
+import { nextPendingChannelSort } from '@/app/channels/data/pending-channel-sort'
 import {
   CHANNEL_INITIAL_PAGE,
   CHANNEL_SEARCH_DEBOUNCE_MS,
@@ -16,6 +17,7 @@ import type {
   ChannelPaginationDesign,
   ChannelReviewRow,
 } from '@/app/channels/types/channel-review'
+import { DEFAULT_PENDING_CHANNEL_SORT, type PendingChannelSort, type PendingChannelSortField } from '@/app/channels/types/pending-channel-sort'
 import { ApiError } from '@/common/api/api-client'
 import { useToast } from '@/common/composables/useToast'
 import { getInitialTablePageSize } from '@/common/data/initial-table-page-size'
@@ -36,6 +38,7 @@ export function usePendingChannelReview() {
   const searchText = ref('')
   const rowsPerPage = ref(getInitialTablePageSize())
   const currentPage = ref(CHANNEL_INITIAL_PAGE)
+  const sort = ref<PendingChannelSort>({ ...DEFAULT_PENDING_CHANNEL_SORT })
   const rows = ref<ChannelReviewRow[]>([])
   const totalCount = ref(0)
   const loading = ref(false)
@@ -111,6 +114,8 @@ export function usePendingChannelReview() {
         page: currentPage.value,
         pageSize: rowsPerPage.value,
         query: searchText.value || undefined,
+        sortBy: sort.value.field,
+        sortDirection: sort.value.direction,
       })
 
       if (requestId !== pendingListRequestId) {
@@ -180,6 +185,14 @@ export function usePendingChannelReview() {
   }
 
   function retry(): void {
+    void loadPending()
+  }
+
+  function setSort(field: PendingChannelSortField): void {
+    sort.value = nextPendingChannelSort(sort.value, field)
+    currentPage.value = CHANNEL_INITIAL_PAGE
+    closeEvidence()
+    clearSelection()
     void loadPending()
   }
 
@@ -342,6 +355,7 @@ export function usePendingChannelReview() {
     searchInput,
     rowsPerPage,
     currentPage,
+    sort,
     rows,
     totalCount,
     tabs,
@@ -360,6 +374,7 @@ export function usePendingChannelReview() {
     updateSearchInput,
     goToPage,
     updateRowsPerPage,
+    setSort,
     retry,
     refresh,
     toggleEvidence,

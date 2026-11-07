@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using YtFetcher.Application.Abstractions.Repositories;
+using YtFetcher.Application.Channels.DTO.Request;
 using YtFetcher.Application.Channels.DTO.Result;
 using YtFetcher.Core.Channels;
 using YtFetcher.Core.Discovery;
@@ -28,10 +29,13 @@ public sealed class ChannelRepository(YtFetcherDbContext dbContext) : IChannelRe
         int page,
         int pageSize,
         string? searchText,
+        PendingChannelSortBy sortBy,
+        ChannelSortDirection sortDirection,
         CancellationToken cancellationToken) =>
-        await ChannelsByStatus(nameof(ChannelStatus.PENDING), searchText)
-            .OrderByDescending(channel => channel.DiscoveredAt)
-            .ThenByDescending(channel => channel.Id)
+        await ApplyPendingSort(
+                ChannelsByStatus(nameof(ChannelStatus.PENDING), searchText),
+                sortBy,
+                sortDirection)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
@@ -133,6 +137,41 @@ public sealed class ChannelRepository(YtFetcherDbContext dbContext) : IChannelRe
 
     public Task SaveChangesAsync(CancellationToken cancellationToken) =>
         dbContext.SaveChangesAsync(cancellationToken);
+
+    private IOrderedQueryable<Channel> ApplyPendingSort(
+        IQueryable<Channel> channels,
+        PendingChannelSortBy sortBy,
+        ChannelSortDirection sortDirection)
+    {
+        var descending = sortDirection == ChannelSortDirection.Desc;
+
+        return sortBy switch
+        {
+            PendingChannelSortBy.Name => descending
+                ? channels.OrderByDescending(channel => channel.Name.ToLower()).ThenByDescending(channel => channel.Id)
+                : channels.OrderBy(channel => channel.Name.ToLower()).ThenBy(channel => channel.Id),
+            PendingChannelSortBy.SubscriberCount => OrderSubscriberCount(channels, descending),
+            PendingChannelSortBy.EvidenceCount => descending
+                ? channels.OrderByDescending(channel => dbContext.ChannelDiscoveries.Count(discovery =>
+                        discovery.ChannelId == channel.Id && !discovery.IsDeleted))
+                    .ThenByDescending(channel => channel.Id)
+                : channels.OrderBy(channel => dbContext.ChannelDiscoveries.Count(discovery =>
+                        discovery.ChannelId == channel.Id && !discovery.IsDeleted))
+                    .ThenBy(channel => channel.Id),
+            _ => descending
+                ? channels.OrderByDescending(channel => channel.DiscoveredAt).ThenByDescending(channel => channel.Id)
+                : channels.OrderBy(channel => channel.DiscoveredAt).ThenBy(channel => channel.Id)
+        };
+    }
+
+    private static IOrderedQueryable<Channel> OrderSubscriberCount(IQueryable<Channel> channels, bool descending) =>
+        descending
+            ? channels.OrderBy(channel => channel.SubscriberCount == null)
+                .ThenByDescending(channel => channel.SubscriberCount)
+                .ThenByDescending(channel => channel.Id)
+            : channels.OrderBy(channel => channel.SubscriberCount == null)
+                .ThenBy(channel => channel.SubscriberCount)
+                .ThenBy(channel => channel.Id);
 
     public async Task<ManualChannelCreateResult> CreateApprovedForSchedulingAsync(
         Channel channel,
