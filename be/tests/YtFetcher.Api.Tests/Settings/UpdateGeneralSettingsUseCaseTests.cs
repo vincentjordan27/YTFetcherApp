@@ -15,14 +15,14 @@ public sealed class UpdateGeneralSettingsUseCaseTests
         var useCase = new UpdateGeneralSettingsUseCase(repository, new StubCurrentActor());
 
         var result = await useCase.UpdateAsync(
-            new UpdateGeneralSettingsRequest(0, 10000, 100, 1, 101, 3, 10, -1),
+            new UpdateGeneralSettingsRequest(0, 10000, 100, 1, 0, 3, 10, -1),
             CancellationToken.None);
 
         Assert.False(result.IsValid);
         Assert.NotNull(result.Errors);
-        Assert.Contains("queriesDailyQuotaLimit", result.Errors.Keys);
-        Assert.Contains("maxDailyApprovedChannels", result.Errors.Keys);
-        Assert.Contains("minimumSubscriberCount", result.Errors.Keys);
+        Assert.Contains(result.Errors, error => error.Field == "queriesDailyQuotaLimit");
+        Assert.Contains(result.Errors, error => error.Field == "maxDailyApprovedChannels");
+        Assert.Contains(result.Errors, error => error.Field == "minimumSubscriberCount");
         Assert.Equal(0, repository.UpdateCount);
     }
 

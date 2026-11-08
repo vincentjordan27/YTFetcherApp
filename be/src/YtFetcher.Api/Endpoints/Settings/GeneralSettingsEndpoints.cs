@@ -23,7 +23,9 @@ public static class GeneralSettingsEndpoints
             var result = await generalSettingsUseCase.UpdateAsync(request, cancellationToken);
             return result.IsValid
                 ? Results.Ok(result.Settings)
-                : Results.ValidationProblem(result.Errors!);
+                : Results.ValidationProblem(result.Errors!
+                    .GroupBy(error => error.Field)
+                    .ToDictionary(group => group.Key, group => group.Select(error => error.Message).ToArray()));
         });
 
         return endpoints;

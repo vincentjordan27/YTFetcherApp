@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using YtFetcher.Core.Channels;
 using YtFetcher.Core.Discovery;
+using YtFetcher.Core.Settings;
 using YtFetcher.Core.Users;
 using YtFetcher.Infrastructure.Persistence;
 
@@ -13,6 +14,7 @@ public sealed class EntityPersistenceAnnotationTests
     [InlineData(typeof(DiscoveryKeyword), "discovery_keywords")]
     [InlineData(typeof(DiscoveryState), "discovery_states")]
     [InlineData(typeof(ChannelDiscovery), "channel_discoveries")]
+    [InlineData(typeof(GeneralSettings), "general_settings")]
     [InlineData(typeof(User), "users")]
     public void Persisted_entity_declares_its_database_table(Type entityType, string expectedTableName)
     {
@@ -62,7 +64,7 @@ public sealed class EntityPersistenceAnnotationTests
             .ToArray();
 
         Assert.Equal(
-            ["ChannelBackfillRuns", "ChannelDiscoveries", "Channels", "DiscoveryKeywords", "DiscoveryStates", "Users", "Videos", "VideoSnapshots", "YouTubeDailyQuotaUsages"],
+            ["ChannelBackfillRuns", "ChannelDiscoveries", "Channels", "DiscoveryKeywords", "DiscoveryStates", "GeneralSettings", "Users", "Videos", "VideoSnapshots", "YouTubeDailyQuotaUsages"],
             setProperties);
         Assert.DoesNotContain(
             typeof(YtFetcherDbContext).GetMethods(

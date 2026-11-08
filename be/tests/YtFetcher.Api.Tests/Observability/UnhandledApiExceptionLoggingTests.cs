@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using System.Net.Http.Json;
 using System.Net;
 using YtFetcher.Api.Tests.Channels;
+using YtFetcher.Core.Channels;
 using YtFetcher.Application.Abstractions.UseCases;
 using YtFetcher.Application.Channels.DTO.Request;
 using YtFetcher.Application.Channels.DTO.Result;
@@ -59,7 +60,7 @@ public class UnhandledApiExceptionLoggingTests
 
         var invalidReason = await client.PostAsJsonAsync(
             $"/api/channels/{Guid.NewGuid()}/reject",
-            new { reason = "   " });
+            new { reason = new string('a', Channel.RejectionReasonMaxLength + 1) });
         Assert.Equal(HttpStatusCode.BadRequest, invalidReason.StatusCode);
 
         Assert.DoesNotContain(application.LogSink.Entries, entry => entry.Level == LogLevel.Error);

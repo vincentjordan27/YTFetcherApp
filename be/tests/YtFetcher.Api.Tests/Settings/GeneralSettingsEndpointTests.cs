@@ -59,7 +59,7 @@ public sealed class GeneralSettingsEndpointTests
                 videoBatchGetStatsDailyQuotaLimit = 10,
                 searchQueriesDailyQuotaLimit = 100,
                 discoveryMaxPagesPerKeywordPerRun = 1,
-                maxDailyApprovedChannels = 11,
+                maxDailyApprovedChannels = 0,
                 backfillPageLimit = 3,
                 backfillDispatchBatchSize = 10,
                 minimumSubscriberCount = (long?)null
@@ -77,21 +77,30 @@ public sealed class GeneralSettingsEndpointTests
     {
         using var scope = services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<YtFetcherDbContext>();
-        dbContext.GeneralSettings.Add(new GeneralSettings
+        var stored = await dbContext.GeneralSettings
+            .SingleOrDefaultAsync(candidate => candidate.Id == GeneralSettings.SingletonId);
+
+        if (stored is null)
         {
-            QueriesDailyQuotaLimit = settings.QueriesDailyQuotaLimit,
-            VideoBatchGetStatsDailyQuotaLimit = settings.VideoBatchGetStatsDailyQuotaLimit,
-            SearchQueriesDailyQuotaLimit = settings.SearchQueriesDailyQuotaLimit,
-            DiscoveryMaxPagesPerKeywordPerRun = settings.DiscoveryMaxPagesPerKeywordPerRun,
-            MaxDailyApprovedChannels = settings.MaxDailyApprovedChannels,
-            BackfillPageLimit = settings.BackfillPageLimit,
-            BackfillDispatchBatchSize = settings.BackfillDispatchBatchSize,
-            MinimumSubscriberCount = settings.MinimumSubscriberCount,
-            CreatedAt = DateTimeOffset.UtcNow,
-            CreatedByUserId = User.SystemUserId,
-            ModifiedAt = DateTimeOffset.UtcNow,
-            ModifiedByUserId = User.SystemUserId
-        });
+            stored = new GeneralSettings
+            {
+                CreatedAt = DateTimeOffset.UtcNow,
+                CreatedByUserId = User.SystemUserId
+            };
+            dbContext.GeneralSettings.Add(stored);
+        }
+
+        stored.QueriesDailyQuotaLimit = settings.QueriesDailyQuotaLimit;
+        stored.VideoBatchGetStatsDailyQuotaLimit = settings.VideoBatchGetStatsDailyQuotaLimit;
+        stored.SearchQueriesDailyQuotaLimit = settings.SearchQueriesDailyQuotaLimit;
+        stored.DiscoveryMaxPagesPerKeywordPerRun = settings.DiscoveryMaxPagesPerKeywordPerRun;
+        stored.MaxDailyApprovedChannels = settings.MaxDailyApprovedChannels;
+        stored.BackfillPageLimit = settings.BackfillPageLimit;
+        stored.BackfillDispatchBatchSize = settings.BackfillDispatchBatchSize;
+        stored.MinimumSubscriberCount = settings.MinimumSubscriberCount;
+        stored.ModifiedAt = DateTimeOffset.UtcNow;
+        stored.ModifiedByUserId = User.SystemUserId;
+
         await dbContext.SaveChangesAsync();
     }
 

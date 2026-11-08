@@ -468,7 +468,7 @@ public class ChannelEndpointTests
     }
 
     [Fact]
-    public async Task Reject_requires_a_reason_within_the_column_limit()
+    public async Task Reject_accepts_an_omitted_reason_and_rejects_an_overlong_reason()
     {
         using var databaseConfiguration = new HostConfigurationScope();
         using var application = new ChannelApiFactory();
@@ -479,26 +479,23 @@ public class ChannelEndpointTests
         var client = application.CreateClient();
 
         var missing = await client.PostAsJsonAsync($"/api/channels/{channel.Id}/reject", new { });
-        Assert.Equal(HttpStatusCode.BadRequest, missing.StatusCode);
-        var missingProblem = await missing.Content.ReadFromJsonAsync<ValidationProblemResponse>();
-        Assert.NotNull(missingProblem);
-        Assert.Contains("reason", missingProblem.Errors.Keys);
+        Assert.Equal(HttpStatusCode.OK, missing.StatusCode);
+        var optionalReason = await ReadChannelAsync(application, channel.Id);
+        Assert.Equal(ChannelStatus.REJECTED, optionalReason.Status);
+        Assert.Null(optionalReason.RejectionReason);
 
-        var blank = await client.PostAsJsonAsync($"/api/channels/{channel.Id}/reject", new { reason = "   " });
-        Assert.Equal(HttpStatusCode.BadRequest, blank.StatusCode);
-        var blankProblem = await blank.Content.ReadFromJsonAsync<ValidationProblemResponse>();
-        Assert.NotNull(blankProblem);
-        Assert.Contains("reason", blankProblem.Errors.Keys);
+        var overlongChannel = PendingChannel("UC-reject-overlong", SeedTime.AddMinutes(1));
+        await SeedAsync(application, overlongChannel);
 
         var overlong = await client.PostAsJsonAsync(
-            $"/api/channels/{channel.Id}/reject",
+            $"/api/channels/{overlongChannel.Id}/reject",
             new { reason = new string('a', Channel.RejectionReasonMaxLength + 1) });
         Assert.Equal(HttpStatusCode.BadRequest, overlong.StatusCode);
         var overlongProblem = await overlong.Content.ReadFromJsonAsync<ValidationProblemResponse>();
         Assert.NotNull(overlongProblem);
         Assert.Contains("reason", overlongProblem.Errors.Keys);
 
-        var stored = await ReadChannelAsync(application, channel.Id);
+        var stored = await ReadChannelAsync(application, overlongChannel.Id);
         Assert.Equal(ChannelStatus.PENDING, stored.Status);
         Assert.Null(stored.RejectionReason);
     }

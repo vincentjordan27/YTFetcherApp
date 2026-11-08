@@ -35,9 +35,9 @@ public sealed class UpdateGeneralSettingsUseCase(
         return new UpdateGeneralSettingsResult(GetGeneralSettingsUseCase.ToResponse(updated), null);
     }
 
-    private static Dictionary<string, string[]> Validate(UpdateGeneralSettingsRequest request)
+    private static List<GeneralSettingsValidationError> Validate(UpdateGeneralSettingsRequest request)
     {
-        var errors = new Dictionary<string, string[]>();
+        var errors = new List<GeneralSettingsValidationError>();
         AddAtLeastOne(errors, "queriesDailyQuotaLimit", request.QueriesDailyQuotaLimit);
         AddAtLeastOne(errors, "videoBatchGetStatsDailyQuotaLimit", request.VideoBatchGetStatsDailyQuotaLimit);
         AddAtLeastOne(errors, "searchQueriesDailyQuotaLimit", request.SearchQueriesDailyQuotaLimit);
@@ -53,7 +53,7 @@ public sealed class UpdateGeneralSettingsUseCase(
         return errors;
     }
 
-    private static void AddAtLeastOne(IDictionary<string, string[]> errors, string field, int value)
+    private static void AddAtLeastOne(List<GeneralSettingsValidationError> errors, string field, int value)
     {
         if (value < 1)
         {
@@ -61,7 +61,7 @@ public sealed class UpdateGeneralSettingsUseCase(
         }
     }
 
-    private static void AddAtLeastZero(IDictionary<string, string[]> errors, string field, int value)
+    private static void AddAtLeastZero(List<GeneralSettingsValidationError> errors, string field, int value)
     {
         if (value < 0)
         {
@@ -69,8 +69,6 @@ public sealed class UpdateGeneralSettingsUseCase(
         }
     }
 
-    private static void AddError(IDictionary<string, string[]> errors, string field, string message) =>
-        errors[field] = errors.TryGetValue(field, out var messages)
-            ? [.. messages, message]
-            : [message];
+    private static void AddError(List<GeneralSettingsValidationError> errors, string field, string message) =>
+        errors.Add(new GeneralSettingsValidationError(field, message));
 }

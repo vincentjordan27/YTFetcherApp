@@ -8,6 +8,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using YtFetcher.Api.Observability;
 using YtFetcher.Core.Quotas;
+using YtFetcher.Core.Settings;
 using YtFetcher.Infrastructure.Observability;
 using YtFetcher.Infrastructure.Persistence;
 
@@ -52,21 +53,35 @@ public sealed class ChannelApiFactory : TestApiFactory
             var now = DateTimeOffset.UtcNow;
             var quotaDate = PacificQuotaWindow.GetQuotaDate(now);
 
-            if (await context.YouTubeDailyQuotaUsages.AnyAsync(usage => usage.QuotaDate == quotaDate, cancellationToken))
+            if (!await context.GeneralSettings.AnyAsync(candidate => candidate.Id == GeneralSettings.SingletonId, cancellationToken))
             {
-                return;
+                context.GeneralSettings.Add(new GeneralSettings
+                {
+                    QueriesDailyQuotaLimit = 10000,
+                    VideoBatchGetStatsDailyQuotaLimit = 10000,
+                    SearchQueriesDailyQuotaLimit = 100,
+                    DiscoveryMaxPagesPerKeywordPerRun = 1,
+                    MaxDailyApprovedChannels = 100,
+                    BackfillPageLimit = 3,
+                    BackfillDispatchBatchSize = 10,
+                    CreatedAt = now,
+                    ModifiedAt = now
+                });
             }
 
-            context.YouTubeDailyQuotaUsages.Add(new YouTubeDailyQuotaUsage
+            if (!await context.YouTubeDailyQuotaUsages.AnyAsync(usage => usage.QuotaDate == quotaDate, cancellationToken))
             {
-                Id = Guid.NewGuid(),
-                QuotaDate = quotaDate,
-                FirstPageAttemptLimit = 500,
-                FirstPageAttemptUsed = 0,
-                IsDeleted = false,
-                CreatedAt = now,
-                ModifiedAt = now
-            });
+                context.YouTubeDailyQuotaUsages.Add(new YouTubeDailyQuotaUsage
+                {
+                    Id = Guid.NewGuid(),
+                    QuotaDate = quotaDate,
+                    FirstPageAttemptLimit = 500,
+                    FirstPageAttemptUsed = 0,
+                    IsDeleted = false,
+                    CreatedAt = now,
+                    ModifiedAt = now
+                });
+            }
 
             await context.SaveChangesAsync(cancellationToken);
         }

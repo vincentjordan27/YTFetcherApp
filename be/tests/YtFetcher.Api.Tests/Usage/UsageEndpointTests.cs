@@ -101,11 +101,11 @@ public class UsageEndpointTests
         Assert.Equal(0, root.GetProperty("searchQueryUnitsUsed").GetInt32());
         Assert.Equal(0, root.GetProperty("firstPageAttemptUsed").GetInt32());
 
-        // Limits are configuration, so they are still reported.
+        // Limits come from General Settings even before the Pacific day's ledger exists.
         Assert.Equal(10000, root.GetProperty("queriesDailyQuotaLimit").GetInt32());
         Assert.Equal(10000, root.GetProperty("videoBatchGetStatsDailyQuotaLimit").GetInt32());
         Assert.Equal(100, root.GetProperty("searchQueriesDailyQuotaLimit").GetInt32());
-        Assert.Equal(500, root.GetProperty("maxDailyApprovedChannels").GetInt32());
+        Assert.Equal(100, root.GetProperty("maxDailyApprovedChannels").GetInt32());
     }
 
     [Fact]
