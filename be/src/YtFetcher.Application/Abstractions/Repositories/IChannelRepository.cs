@@ -129,7 +129,7 @@ public interface IChannelRepository
     Task<ChannelBatchMutationResult> TryRejectManyAsync(
         IReadOnlyList<Guid> channelIds,
         Guid rejectedByUserId,
-        string reason,
+        string? reason,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken);
 

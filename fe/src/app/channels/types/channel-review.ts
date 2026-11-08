@@ -50,6 +50,7 @@ export interface ChannelReviewRow {
   readonly evidenceCount?: number
   readonly subscriberCount?: number | null
   readonly reasonTitle?: string
+  readonly hasRejectionReason?: boolean
 }
 
 export interface ChannelPaginationDesign {

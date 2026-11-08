@@ -3,6 +3,7 @@ using YtFetcher.Core.BackfillRuns;
 using YtFetcher.Core.Channels;
 using YtFetcher.Core.Discovery;
 using YtFetcher.Core.Quotas;
+using YtFetcher.Core.Settings;
 using YtFetcher.Core.Users;
 using YtFetcher.Core.Videos;
 
@@ -27,4 +28,6 @@ public sealed class YtFetcherDbContext(DbContextOptions<YtFetcherDbContext> opti
     public DbSet<ChannelBackfillRun> ChannelBackfillRuns => Set<ChannelBackfillRun>();
 
     public DbSet<User> Users => Set<User>();
+
+    public DbSet<GeneralSettings> GeneralSettings => Set<GeneralSettings>();
 }

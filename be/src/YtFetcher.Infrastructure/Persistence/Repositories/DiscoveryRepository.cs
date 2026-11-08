@@ -11,6 +11,22 @@ namespace YtFetcher.Infrastructure.Persistence.Repositories;
 
 public sealed class DiscoveryRepository(YtFetcherDbContext dbContext) : IDiscoveryRepository
 {
+    public Task<DiscoveryPersistResult> PersistKeywordDiscoveryAsync(
+        DiscoveryKeyword keyword,
+        IReadOnlyList<YouTubeChannelCandidate> candidates,
+        string? nextPageToken,
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken,
+        DateOnly quotaDate) =>
+        PersistKeywordDiscoveryAsync(
+            keyword,
+            candidates,
+            nextPageToken,
+            utcNow,
+            cancellationToken,
+            quotaDate,
+            minimumSubscriberCount: null);
+
     public async Task<IReadOnlyList<DiscoveryKeyword>> GetActiveKeywordsAsync(
         CancellationToken cancellationToken) =>
         await dbContext.DiscoveryKeywords
@@ -41,7 +57,8 @@ public sealed class DiscoveryRepository(YtFetcherDbContext dbContext) : IDiscove
         string? nextPageToken,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken,
-        DateOnly quotaDate)
+        DateOnly quotaDate,
+        long? minimumSubscriberCount)
     {
         IDbContextTransaction? transaction = null;
 
@@ -84,6 +101,15 @@ public sealed class DiscoveryRepository(YtFetcherDbContext dbContext) : IDiscove
                     if (existingChannel.Status == ChannelStatus.PENDING)
                     {
                         existingChannel.SubscriberCount = metadata.SubscriberCount;
+                        if (minimumSubscriberCount is not null &&
+                            metadata.SubscriberCount is not null &&
+                            metadata.SubscriberCount < minimumSubscriberCount)
+                        {
+                            existingChannel.Reject(
+                                utcNow,
+                                User.SystemUserId,
+                                "Subscriber count is below the configured minimum.");
+                        }
                     }
                     existingChannel.ModifiedAt = utcNow;
                     existingChannel.ModifiedByUserId = User.SystemUserId;
@@ -110,6 +136,16 @@ public sealed class DiscoveryRepository(YtFetcherDbContext dbContext) : IDiscove
                     ModifiedAt = utcNow,
                     ModifiedByUserId = User.SystemUserId
                 };
+
+                if (minimumSubscriberCount is not null &&
+                    metadata.SubscriberCount is not null &&
+                    metadata.SubscriberCount < minimumSubscriberCount)
+                {
+                    newChannel.Reject(
+                        utcNow,
+                        User.SystemUserId,
+                        "Subscriber count is below the configured minimum.");
+                }
 
                 dbContext.Channels.Add(newChannel);
                 existingChannels[channelId] = newChannel;
@@ -231,4 +267,5 @@ public sealed class DiscoveryRepository(YtFetcherDbContext dbContext) : IDiscove
             }
         }
     }
+
 }

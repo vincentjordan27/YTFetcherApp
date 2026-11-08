@@ -4,7 +4,9 @@ using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Abstractions.UseCases;
 using YtFetcher.Application.Backfill.DTO.Result;
 using YtFetcher.Application.Quotas.DTO.Result;
+using YtFetcher.Application.Settings;
 using YtFetcher.Application.Videos.DTO.Result;
+using YtFetcher.Application.YouTube;
 using YtFetcher.Core.BackfillRuns;
 using YtFetcher.Core.Channels;
 using YtFetcher.Core.Quotas;
@@ -25,14 +27,10 @@ public sealed class DailyProcessingUseCase(
     INewUploadMonitoringRepository newUploadMonitoringRepository,
     INewUploadMonitorActivityLogger newUploadMonitorActivityLogger,
     IBackfillRepository backfillRepository,
-    IBackfillPageLimitPolicy backfillPageLimitPolicy,
-    IBackfillDispatchBatchSizePolicy backfillDispatchBatchSizePolicy,
+    IGeneralSettingsProvider generalSettingsProvider,
     IBackfillSchedulingUseCase backfillSchedulingUseCase,
     TimeProvider timeProvider) : IRunDailyProcessingUseCase
 {
-    /// <summary>Provider-request bound of one statistics batch; one batch spends exactly one Batch Stats unit.</summary>
-    private const int StatisticsBatchSize = 50;
-
     private const string MonitorResolveUploadsPlaylistOperation = "ResolveUploadsPlaylist";
     private const string MonitorGetUploadsPageOperation = "GetUploadsPage";
     private const string MonitorGetVideoStatsOperation = "GetVideoStats";
@@ -49,6 +47,7 @@ public sealed class DailyProcessingUseCase(
         var utcNow = timeProvider.GetUtcNow();
         var quotaDate = PacificQuotaWindow.GetQuotaDate(utcNow);
         var quotaDateStartUtc = PacificQuotaWindow.GetQuotaDateStartUtc(quotaDate);
+        var settings = await generalSettingsProvider.GetRequiredAsync(cancellationToken);
 
         // Phase 0: initialize the date's first-page window before anything may reserve a provider unit.
         await dailyQuotaRepository.EnsureLedgerAsync(quotaDate, cancellationToken);
@@ -67,7 +66,7 @@ public sealed class DailyProcessingUseCase(
 
         try
         {
-            return await RunOwnedAsync(quotaDate, quotaDateStartUtc, claimToken, utcNow, cancellationToken);
+            return await RunOwnedAsync(quotaDate, quotaDateStartUtc, claimToken, utcNow, settings, cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -86,6 +85,7 @@ public sealed class DailyProcessingUseCase(
         DateTimeOffset quotaDateStartUtc,
         Guid claimToken,
         DateTimeOffset utcNow,
+        GeneralSettingsSnapshot settings,
         CancellationToken cancellationToken)
     {
         await videoStatisticsRepository.ReleaseExpiredClaimsAsync(
@@ -106,7 +106,7 @@ public sealed class DailyProcessingUseCase(
                 quotaDateStartUtc,
                 utcNow,
                 claimToken,
-                StatisticsBatchSize,
+                YouTubeApiLimits.MaxResourceIdsPerRequest,
                 cancellationToken);
 
             if (batch.Count == 0)
@@ -263,7 +263,7 @@ public sealed class DailyProcessingUseCase(
         // One pass is bounded by the configured dispatch size AND both live remainders, because each dispatched
         // continuation consumes one Query unit and, for a non-empty page, one Batch Stats unit.
         var totalBound = Math.Min(
-            backfillDispatchBatchSizePolicy.BatchSize,
+            settings.BackfillDispatchBatchSize,
             Math.Min(finalization.QueriesRemainder, finalization.VideoBatchStatsRemainder));
         if (totalBound < 1)
         {
@@ -295,7 +295,7 @@ public sealed class DailyProcessingUseCase(
         }
 
         var dispatch = await backfillRepository.DispatchCandidatesAsync(
-            backfillPageLimitPolicy.PageLimit,
+            settings.BackfillPageLimit,
             utcNow,
             remainingForFreshDispatch,
             cancellationToken);

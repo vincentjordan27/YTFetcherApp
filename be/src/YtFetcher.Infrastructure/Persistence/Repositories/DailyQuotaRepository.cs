@@ -1,8 +1,6 @@
-using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using YtFetcher.Application.Abstractions.Repositories;
 using YtFetcher.Application.Abstractions.Services;
-using YtFetcher.Application.Quotas;
 using YtFetcher.Application.Quotas.DTO.Result;
 using YtFetcher.Core.Quotas;
 using YtFetcher.Core.Users;
@@ -19,7 +17,7 @@ namespace YtFetcher.Infrastructure.Persistence.Repositories;
 /// </summary>
 public sealed class DailyQuotaRepository(
     YtFetcherDbContext dbContext,
-    IAppSettingsService appSettingsService,
+    IGeneralSettingsProvider generalSettingsProvider,
     TimeProvider timeProvider) : IDailyQuotaRepository
 {
     public Task<YouTubeDailyQuotaUsage?> GetForDateAsync(
@@ -33,7 +31,8 @@ public sealed class DailyQuotaRepository(
 
     public async Task EnsureLedgerAsync(DateOnly quotaDate, CancellationToken cancellationToken)
     {
-        var firstPageAttemptLimit = ReadRequiredInt(QuotaConfigurationKeys.MaxDailyApprovedChannels);
+        var settings = await generalSettingsProvider.GetRequiredAsync(cancellationToken);
+        var firstPageAttemptLimit = settings.MaxDailyApprovedChannels;
         var utcNow = timeProvider.GetUtcNow();
 
         if (!dbContext.Database.IsRelational())
@@ -212,8 +211,9 @@ public sealed class DailyQuotaRepository(
         DateTimeOffset utcNow,
         CancellationToken cancellationToken)
     {
-        var queriesLimit = ReadRequiredInt(QuotaConfigurationKeys.QueriesDailyQuotaLimit);
-        var batchStatsLimit = ReadRequiredInt(QuotaConfigurationKeys.VideoBatchGetStatsDailyQuotaLimit);
+        var settings = await generalSettingsProvider.GetRequiredAsync(cancellationToken);
+        var queriesLimit = settings.QueriesDailyQuotaLimit;
+        var batchStatsLimit = settings.VideoBatchGetStatsDailyQuotaLimit;
 
         if (!dbContext.Database.IsRelational())
         {
@@ -305,7 +305,7 @@ public sealed class DailyQuotaRepository(
         Guid? dailyProcessClaimToken,
         CancellationToken cancellationToken)
     {
-        var queriesLimit = ReadRequiredInt(QuotaConfigurationKeys.QueriesDailyQuotaLimit);
+        var queriesLimit = (await generalSettingsProvider.GetRequiredAsync(cancellationToken)).QueriesDailyQuotaLimit;
 
         if (!dbContext.Database.IsRelational())
         {
@@ -348,7 +348,7 @@ public sealed class DailyQuotaRepository(
         Guid? dailyProcessClaimToken,
         CancellationToken cancellationToken)
     {
-        var batchStatsLimit = ReadRequiredInt(QuotaConfigurationKeys.VideoBatchGetStatsDailyQuotaLimit);
+        var batchStatsLimit = (await generalSettingsProvider.GetRequiredAsync(cancellationToken)).VideoBatchGetStatsDailyQuotaLimit;
 
         if (!dbContext.Database.IsRelational())
         {
@@ -391,7 +391,7 @@ public sealed class DailyQuotaRepository(
         Guid? dailyProcessClaimToken,
         CancellationToken cancellationToken)
     {
-        var searchLimit = ReadRequiredInt(QuotaConfigurationKeys.SearchQueriesDailyQuotaLimit);
+        var searchLimit = (await generalSettingsProvider.GetRequiredAsync(cancellationToken)).SearchQueriesDailyQuotaLimit;
 
         if (!dbContext.Database.IsRelational())
         {
@@ -520,13 +520,4 @@ public sealed class DailyQuotaRepository(
             : QuotaReservationResult.NoRemainingCapacity;
     }
 
-    private int ReadRequiredInt(string key)
-    {
-        var value = appSettingsService.GetValue(key);
-
-        return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed
-            : throw new InvalidOperationException(
-                $"Configuration value '{key}' is missing or not a whole number.");
-    }
 }

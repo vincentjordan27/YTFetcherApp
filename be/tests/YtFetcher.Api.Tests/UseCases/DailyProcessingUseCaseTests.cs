@@ -4,6 +4,7 @@ using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Abstractions.UseCases;
 using YtFetcher.Application.Backfill.DTO.Result;
 using YtFetcher.Application.Quotas.DTO.Result;
+using YtFetcher.Application.Settings;
 using YtFetcher.Application.Videos.DTO.Result;
 using YtFetcher.Application.Videos.UseCases;
 using YtFetcher.Core.BackfillRuns;
@@ -240,7 +241,7 @@ public class DailyProcessingUseCaseTests
             .ToArray();
 
         Assert.DoesNotContain(parameterTypes, type => type.Name == "IAppSettingsService");
-        Assert.Contains(typeof(IBackfillDispatchBatchSizePolicy), parameterTypes);
+        Assert.Contains(typeof(IGeneralSettingsProvider), parameterTypes);
     }
 
     [Fact]
@@ -387,8 +388,7 @@ public class DailyProcessingUseCaseTests
                 Monitoring,
                 new FakeMonitorLogger(),
                 Backfill,
-                new FakePageLimitPolicy(),
-                new FakeDispatchBatchSizePolicy(),
+                new FakeGeneralSettingsProvider(),
                 Scheduling,
                 new FixedTimeProvider(Now));
         }
@@ -413,6 +413,15 @@ public class DailyProcessingUseCaseTests
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => utcNow;
+    }
+
+    private sealed class FakeGeneralSettingsProvider : IGeneralSettingsProvider
+    {
+        public Task<GeneralSettingsSnapshot> GetRequiredAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(GeneralSettingsSnapshot.Default with
+            {
+                BackfillPageLimit = 3
+            });
     }
 
     private sealed class FakeDailyQuotaRepository(List<string> order) : IDailyQuotaRepository
@@ -647,16 +656,6 @@ public class DailyProcessingUseCaseTests
         public Task<BackfillPagePersistResult> PersistPageAsync(BackfillPageResult page, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<bool> DeferForQuotaLimitAsync(Guid channelId, Guid claimToken, QuotaLimitBucket bucket, DateTimeOffset utcNow, CancellationToken cancellationToken) => throw new NotSupportedException();
         public Task<BackfillFailureResult?> RecordFailureAsync(Guid channelId, Guid claimToken, string failureReason, DateTimeOffset utcNow, CancellationToken cancellationToken) => throw new NotSupportedException();
-    }
-
-    private sealed class FakePageLimitPolicy : IBackfillPageLimitPolicy
-    {
-        public int PageLimit => 3;
-    }
-
-    private sealed class FakeDispatchBatchSizePolicy : IBackfillDispatchBatchSizePolicy
-    {
-        public int BatchSize => 10;
     }
 
     private sealed class RecordingSchedulingUseCase : IBackfillSchedulingUseCase

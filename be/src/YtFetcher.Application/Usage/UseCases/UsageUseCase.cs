@@ -1,4 +1,3 @@
-using System.Globalization;
 using YtFetcher.Application.Abstractions.Repositories;
 using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Abstractions.UseCases;
@@ -14,7 +13,7 @@ namespace YtFetcher.Application.Usage.UseCases;
 /// </summary>
 public sealed class UsageUseCase(
     IDailyQuotaRepository dailyQuotaRepository,
-    IAppSettingsService appSettingsService,
+    IGeneralSettingsProvider generalSettingsProvider,
     TimeProvider timeProvider) : IUsageUseCase
 {
     public async Task<TodayUsageResponse> GetTodayAsync(CancellationToken cancellationToken)
@@ -23,38 +22,26 @@ public sealed class UsageUseCase(
 
         var ledger = await dailyQuotaRepository.GetForDateAsync(quotaDate, cancellationToken);
 
-        var queriesLimit = ReadRequiredInt(QuotaConfigurationKeys.QueriesDailyQuotaLimit);
-        var batchStatsLimit = ReadRequiredInt(QuotaConfigurationKeys.VideoBatchGetStatsDailyQuotaLimit);
-        var searchLimit = ReadRequiredInt(QuotaConfigurationKeys.SearchQueriesDailyQuotaLimit);
+        var settings = await generalSettingsProvider.GetRequiredAsync(cancellationToken);
 
         // The first-page cap is a persisted per-day snapshot: an initialized day must report the limit it was
-        // created with, not whatever configuration says later. Only a no-ledger day reads configuration.
+        // created with, not whatever General Settings says later. Only a no-ledger day reads settings.
         var maxApprovedChannels = ledger?.FirstPageAttemptLimit
-            ?? ReadRequiredInt(QuotaConfigurationKeys.MaxDailyApprovedChannels);
+            ?? settings.MaxDailyApprovedChannels;
 
         return new TodayUsageResponse(
             quotaDate,
             ledger is not null,
             ledger?.QueriesUnitsUsed ?? 0,
-            queriesLimit,
+            settings.QueriesDailyQuotaLimit,
             ledger?.VideoBatchStatsUnitsUsed ?? 0,
-            batchStatsLimit,
+            settings.VideoBatchGetStatsDailyQuotaLimit,
             ledger?.SearchQueryUnitsUsed ?? 0,
-            searchLimit,
+            settings.SearchQueriesDailyQuotaLimit,
             ledger?.FirstPageAttemptUsed ?? 0,
             maxApprovedChannels,
             ledger?.SearchQuotaExhaustedAt,
             ledger?.QueriesQuotaExhaustedAt,
             ledger?.VideoBatchStatsQuotaExhaustedAt);
-    }
-
-    private int ReadRequiredInt(string key)
-    {
-        var value = appSettingsService.GetValue(key);
-
-        return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed
-            : throw new InvalidOperationException(
-                $"Configuration value '{key}' is missing or not a whole number.");
     }
 }

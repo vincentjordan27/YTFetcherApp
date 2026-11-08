@@ -27,10 +27,7 @@ export function useApprovedChannelRejection(onSettled: () => Promise<void>) {
 
   const activeDialog = computed(() => (selectedChannel.value === null ? null : ('reject' as const)))
 
-  const canSubmit = computed(() => {
-    const reason = rejectReason.value.trim()
-    return reason.length > 0 && reason.length <= REJECTION_REASON_MAX_LENGTH
-  })
+  const canSubmit = computed(() => rejectReason.value.trim().length <= REJECTION_REASON_MAX_LENGTH)
   const selectedCount = computed(() => selectedIds.value.size)
   const selectedIdList = computed(() => [...selectedIds.value])
 

@@ -5,6 +5,7 @@ using System.Xml;
 using Microsoft.Extensions.Logging;
 using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Backfill.DTO.Result;
+using YtFetcher.Application.YouTube;
 using YtFetcher.Infrastructure.YouTube.DTO.Request;
 using YtFetcher.Infrastructure.YouTube.DTO.Response;
 using YtFetcher.Infrastructure.Configuration;
@@ -21,11 +22,6 @@ public sealed class YouTubeBackfillClient(
     IAppSettingsService appSettingsService,
     ILogger<YouTubeBackfillClient> logger) : IYouTubeBackfillGateway
 {
-    private const int MaxPlaylistItemsPerPage = 50;
-
-    /// <summary>Google <c>videos.list</c> contract bound; distinct from the playlistItems page size.</summary>
-    private const int MaxVideoIdsPerRequest = 50;
-
     private const string UploadsPlaylistUnavailableReason = "Unable to find this channel's uploads playlist.";
 
     private const string UploadsPageFailedReason = "Unable to retrieve uploads from YouTube. Try again later.";
@@ -95,7 +91,7 @@ public sealed class YouTubeBackfillClient(
         var request = new YouTubePlaylistItemsListRequest
         {
             UploadsPlaylistId = uploadsPlaylistId,
-            MaxResults = MaxPlaylistItemsPerPage,
+            MaxResults = YouTubeApiLimits.MaxPlaylistItemsPerPage,
             ApiKey = apiKey,
             PageToken = pageToken
         };
@@ -147,10 +143,10 @@ public sealed class YouTubeBackfillClient(
             return VideoStatsBatchResult.Failed(VideoStatsFailedReason);
         }
 
-        if (youtubeVideoIds.Count > MaxVideoIdsPerRequest)
+        if (youtubeVideoIds.Count > YouTubeApiLimits.MaxResourceIdsPerRequest)
         {
             throw new ArgumentException(
-                $"A statistics batch cannot exceed {MaxVideoIdsPerRequest} video ids.",
+                $"A statistics batch cannot exceed {YouTubeApiLimits.MaxResourceIdsPerRequest} video ids.",
                 nameof(youtubeVideoIds));
         }
 

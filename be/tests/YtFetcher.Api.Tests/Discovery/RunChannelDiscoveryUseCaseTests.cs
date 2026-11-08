@@ -338,9 +338,13 @@ public class RunChannelDiscoveryUseCaseTests
         public override DateTimeOffset GetUtcNow() => utcNow;
     }
 
-    private sealed class FixedPageLimitPolicy(int pageLimit) : IDiscoveryPageLimitPolicy
+    private sealed class FixedPageLimitPolicy(int pageLimit) : IGeneralSettingsProvider
     {
-        public int PageLimit { get; } = pageLimit;
+        public Task<YtFetcher.Application.Settings.GeneralSettingsSnapshot> GetRequiredAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(YtFetcher.Application.Settings.GeneralSettingsSnapshot.Default with
+            {
+                DiscoveryMaxPagesPerKeywordPerRun = pageLimit
+            });
     }
 
     private sealed record PersistCall(

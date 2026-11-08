@@ -261,7 +261,7 @@ public class BackfillSchedulingUseCaseTests
         public Task<ChannelBatchMutationResult> TryApproveManyForSchedulingAsync(IReadOnlyList<Guid> channelIds, DateOnly quotaDate, Guid approvedByUserId, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<ChannelBatchMutationResult> TryRejectManyAsync(IReadOnlyList<Guid> channelIds, Guid rejectedByUserId, string reason, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
+        public Task<ChannelBatchMutationResult> TryRejectManyAsync(IReadOnlyList<Guid> channelIds, Guid rejectedByUserId, string? reason, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
         public Task<ManualChannelCreateResult> CreateApprovedForSchedulingAsync(Channel channel, DateOnly quotaDate, CancellationToken cancellationToken) =>

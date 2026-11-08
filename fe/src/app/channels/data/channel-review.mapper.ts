@@ -92,7 +92,8 @@ export function toRejectedChannelRow(item: RejectedChannelItem): ChannelReviewRo
     statusLabel: 'Rejected',
     discoveredAt: formatChannelDateTime(item.discoveredAt),
     rejectedAt: formatNullableChannelDateTime(item.rejectedAt),
-    reasonTitle: item.rejectionReason ?? EMPTY_DISPLAY,
+    reasonTitle: item.rejectionReason?.trim() || '-',
+    hasRejectionReason: Boolean(item.rejectionReason?.trim()),
   }
 }
 

@@ -562,7 +562,7 @@ public class ManualApproveChannelUseCaseTests
         public Task<ChannelBatchMutationResult> TryApproveManyForSchedulingAsync(IReadOnlyList<Guid> channelIds, DateOnly quotaDate, Guid approvedByUserId, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 
-        public Task<ChannelBatchMutationResult> TryRejectManyAsync(IReadOnlyList<Guid> channelIds, Guid rejectedByUserId, string reason, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
+        public Task<ChannelBatchMutationResult> TryRejectManyAsync(IReadOnlyList<Guid> channelIds, Guid rejectedByUserId, string? reason, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
 }
 

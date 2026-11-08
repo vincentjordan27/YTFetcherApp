@@ -15,6 +15,7 @@ using YtFetcher.Api.Endpoints.BackfillRuns;
 using YtFetcher.Api.Endpoints.Channels;
 using YtFetcher.Api.Endpoints.DiscoveryKeywords;
 using YtFetcher.Api.Endpoints.Health;
+using YtFetcher.Api.Endpoints.Settings;
 using YtFetcher.Api.Endpoints.Usage;
 using YtFetcher.Api.Endpoints.Videos;
 using YtFetcher.Api.Observability;
@@ -56,7 +57,7 @@ builder.Services.AddOptions<CorsOptions>().Configure<IAuthenticationRuntimeConfi
                 origin,
                 StringComparer.OrdinalIgnoreCase))
             .AllowCredentials()
-            .WithMethods("GET", "POST", "DELETE")
+            .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Accept", "Content-Type")));
 
 if (authenticationConfiguration.AuthenticationEnabled)
@@ -158,6 +159,7 @@ app.MapBackfillRunEndpoints();
 app.MapDiscoveryKeywordEndpoints();
 app.MapVideoEndpoints();
 app.MapUsageEndpoints();
+app.MapGeneralSettingsEndpoints();
 
 // The quota ledger starts at 00:01 Pacific. Discovery follows at 01:00 Pacific, after the daily job
 // has initialized the new quota window.

@@ -104,7 +104,7 @@ public class ChannelUseCaseTests
     [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public async Task Reject_blank_reason_returns_a_validation_response_without_mutating(string? reason)
+    public async Task Reject_blank_reason_saves_no_reason(string? reason)
     {
         var channel = CreatePendingChannel();
         var (useCase, repository, logger) = CreateUseCase(channel);
@@ -114,11 +114,11 @@ public class ChannelUseCaseTests
             new RejectChannelRequest(reason),
             CancellationToken.None);
 
-        Assert.Equal(ChannelMutationStatus.ValidationError, result.Status);
-        Assert.Equal("A rejection reason is required.", result.ValidationMessage);
-        Assert.Equal(ChannelStatus.PENDING, channel.Status);
-        Assert.Equal(0, repository.SaveCount);
-        Assert.Empty(logger.Events);
+        Assert.Equal(ChannelMutationStatus.Succeeded, result.Status);
+        Assert.Equal(ChannelStatus.REJECTED, channel.Status);
+        Assert.Null(channel.RejectionReason);
+        Assert.Equal(1, repository.SaveCount);
+        Assert.Equal(new[] { "Rejected" }, logger.Events);
     }
 
     [Fact]
@@ -969,7 +969,7 @@ public class ChannelUseCaseTests
         public Task<ChannelBatchMutationResult> TryApproveManyForSchedulingAsync(IReadOnlyList<Guid> channelIds, DateOnly quotaDate, Guid approvedByUserId, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
             Task.FromResult(ChannelBatchMutationResult.Refused(ChannelBatchMutationStatus.InvalidStatus));
 
-        public Task<ChannelBatchMutationResult> TryRejectManyAsync(IReadOnlyList<Guid> channelIds, Guid rejectedByUserId, string reason, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
+        public Task<ChannelBatchMutationResult> TryRejectManyAsync(IReadOnlyList<Guid> channelIds, Guid rejectedByUserId, string? reason, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
             Task.FromResult(ChannelBatchMutationResult.Refused(ChannelBatchMutationStatus.InvalidStatus));
 
         public Task<ManualChannelCreateResult> CreateApprovedForSchedulingAsync(Channel channel, DateOnly quotaDate, CancellationToken cancellationToken) =>

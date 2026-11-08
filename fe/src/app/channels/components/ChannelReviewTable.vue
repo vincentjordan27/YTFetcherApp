@@ -215,11 +215,11 @@ function formatSubscriberCount(value: number | null | undefined): string {
         <tr
           class="channel-review-table__row"
           :class="{
-            'channel-review-table__row--expandable': variant === 'pending' || variant === 'rejected',
+            'channel-review-table__row--expandable': variant === 'pending' || (variant === 'rejected' && channel.hasRejectionReason),
             'channel-review-table__row--expanded': expandedEvidenceId === channel.id,
             'channel-review-table__row--selected': isSelected(channel.id),
           }"
-          @click="variant === 'pending' ? emit('toggle-evidence', channel.id) : variant === 'rejected' && emit('open-rejection-reason', channel)"
+          @click="variant === 'pending' ? emit('toggle-evidence', channel.id) : variant === 'rejected' && channel.hasRejectionReason && emit('open-rejection-reason', channel)"
         >
           <td v-if="selectionEnabled" class="channel-review-table__select-cell" @click.stop>
             <input
@@ -303,7 +303,13 @@ function formatSubscriberCount(value: number | null | undefined): string {
             <td class="channel-review-table__date channel-review-table__date--muted">{{ channel.lastUploadCheck }}</td>
           </template>
           <td v-else class="channel-review-table__rejection-reason-cell">
-            <ChannelRejectionReason :title="channel.reasonTitle" @open="emit('open-rejection-reason', channel)" @click.stop />
+            <ChannelRejectionReason
+              v-if="channel.hasRejectionReason"
+              :title="channel.reasonTitle"
+              @open="emit('open-rejection-reason', channel)"
+              @click.stop
+            />
+            <span v-else>-</span>
           </td>
           <td class="channel-review-table__actions-cell">
             <div class="channel-review-table__actions">

@@ -26,5 +26,15 @@ public interface IDiscoveryRepository
         DateTimeOffset utcNow,
         CancellationToken cancellationToken,
         DateOnly quotaDate);
+
+    Task<DiscoveryPersistResult> PersistKeywordDiscoveryAsync(
+        DiscoveryKeyword keyword,
+        IReadOnlyList<YouTubeChannelCandidate> candidates,
+        string? nextPageToken,
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken,
+        DateOnly quotaDate,
+        long? minimumSubscriberCount) =>
+        PersistKeywordDiscoveryAsync(keyword, candidates, nextPageToken, utcNow, cancellationToken, quotaDate);
 }
 

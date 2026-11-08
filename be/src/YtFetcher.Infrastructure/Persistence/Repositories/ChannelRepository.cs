@@ -344,7 +344,7 @@ public sealed class ChannelRepository(YtFetcherDbContext dbContext) : IChannelRe
     public async Task<ChannelBatchMutationResult> TryRejectManyAsync(
         IReadOnlyList<Guid> channelIds,
         Guid rejectedByUserId,
-        string reason,
+        string? reason,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken)
     {

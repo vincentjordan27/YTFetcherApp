@@ -61,7 +61,7 @@ public class DailyProcessingOwnershipPostgresTests : IAsyncLifetime
 
         var outcomes = await Task.WhenAll(
             CreateQuotaRepository().TryClaimDailyProcessAsync(QuotaDate, firstToken, Now, CancellationToken.None),
-            new DailyQuotaRepository(competitor, new StubAppSettingsService(), TimeProvider.System)
+            new DailyQuotaRepository(competitor, new StubGeneralSettingsProvider(), TimeProvider.System)
                 .TryClaimDailyProcessAsync(QuotaDate, secondToken, Now, CancellationToken.None));
 
         Assert.Single(outcomes, outcome => outcome == DailyProcessClaimDecision.Claimed);
@@ -95,7 +95,7 @@ public class DailyProcessingOwnershipPostgresTests : IAsyncLifetime
         await using var competitor = CreateContext();
         var outcomes = await Task.WhenAll(
             CreateQuotaRepository().TryReserveQueriesUnitAsync(QuotaDate, null, CancellationToken.None),
-            new DailyQuotaRepository(competitor, new StubAppSettingsService(), TimeProvider.System)
+            new DailyQuotaRepository(competitor, new StubGeneralSettingsProvider(), TimeProvider.System)
                 .TryReserveQueriesUnitAsync(QuotaDate, null, CancellationToken.None));
 
         Assert.Single(outcomes, outcome => outcome == QuotaReservationResult.Reserved);
@@ -238,7 +238,7 @@ public class DailyProcessingOwnershipPostgresTests : IAsyncLifetime
         new(new DbContextOptionsBuilder<YtFetcherDbContext>().UseNpgsql(connectionString).Options);
 
     private DailyQuotaRepository CreateQuotaRepository() =>
-        new(dbContext, new StubAppSettingsService(), TimeProvider.System);
+        new(dbContext, new StubGeneralSettingsProvider(), TimeProvider.System);
 
     private async Task EnsureLedgerAsync() =>
         await CreateQuotaRepository().EnsureLedgerAsync(QuotaDate, CancellationToken.None);
@@ -293,20 +293,9 @@ public class DailyProcessingOwnershipPostgresTests : IAsyncLifetime
             .AsNoTracking()
             .SingleAsync(row => row.QuotaDate == QuotaDate);
 
-    private sealed class StubAppSettingsService : IAppSettingsService
+    private sealed class StubGeneralSettingsProvider : IGeneralSettingsProvider
     {
-        public string? GetValue(string key) => key switch
-        {
-            QuotaConfigurationKeys.QueriesDailyQuotaLimit => "10000",
-            QuotaConfigurationKeys.VideoBatchGetStatsDailyQuotaLimit => "10000",
-            QuotaConfigurationKeys.SearchQueriesDailyQuotaLimit => "100",
-            QuotaConfigurationKeys.MaxDailyApprovedChannels => "500",
-            _ => null
-        };
-
-        public string GetRequiredValue(string key) =>
-            GetValue(key) ?? throw new InvalidOperationException($"Missing {key}.");
-
-        public T GetRequiredSection<T>(string sectionName) where T : class => throw new NotSupportedException();
+        public Task<YtFetcher.Application.Settings.GeneralSettingsSnapshot> GetRequiredAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(YtFetcher.Application.Settings.GeneralSettingsSnapshot.Default with { MaxDailyApprovedChannels = 500 });
     }
 }

@@ -427,16 +427,7 @@ public sealed class ChannelUseCase(
         CancellationToken cancellationToken)
     {
         var reason = request.Reason?.Trim();
-        if (string.IsNullOrEmpty(reason))
-        {
-            return new ChannelMutationResponse(
-                ChannelMutationStatus.ValidationError,
-                null,
-                null,
-                "A rejection reason is required.");
-        }
-
-        if (reason.Length > Channel.RejectionReasonMaxLength)
+        if (reason is { Length: > Channel.RejectionReasonMaxLength })
         {
             return new ChannelMutationResponse(
                 ChannelMutationStatus.ValidationError,
@@ -467,7 +458,7 @@ public sealed class ChannelUseCase(
         BulkRejectChannelsRequest request,
         CancellationToken cancellationToken)
     {
-        var reason = request.Reason!.Trim();
+        var reason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
         var rejected = await channelRepository.TryRejectManyAsync(
             request.ChannelIds!,
             currentActor.UserId,

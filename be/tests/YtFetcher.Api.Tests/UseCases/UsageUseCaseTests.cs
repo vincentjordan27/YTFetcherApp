@@ -119,28 +119,17 @@ public class UsageUseCaseTests
     }
 
     private static UsageUseCase CreateUseCase(IDailyQuotaRepository repository, DateTimeOffset utcNow) =>
-        new(repository, new StubAppSettingsService(), new FixedTimeProvider(utcNow));
+        new(repository, new StubGeneralSettingsProvider(), new FixedTimeProvider(utcNow));
 
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => utcNow;
     }
 
-    private sealed class StubAppSettingsService : IAppSettingsService
+    private sealed class StubGeneralSettingsProvider : IGeneralSettingsProvider
     {
-        public string? GetValue(string key) => key switch
-        {
-            QuotaConfigurationKeys.QueriesDailyQuotaLimit => "10000",
-            QuotaConfigurationKeys.VideoBatchGetStatsDailyQuotaLimit => "10000",
-            QuotaConfigurationKeys.SearchQueriesDailyQuotaLimit => "100",
-            QuotaConfigurationKeys.MaxDailyApprovedChannels => "500",
-            _ => null
-        };
-
-        public string GetRequiredValue(string key) =>
-            GetValue(key) ?? throw new InvalidOperationException($"Missing {key}.");
-
-        public T GetRequiredSection<T>(string sectionName) where T : class => throw new NotSupportedException();
+        public Task<YtFetcher.Application.Settings.GeneralSettingsSnapshot> GetRequiredAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(YtFetcher.Application.Settings.GeneralSettingsSnapshot.Default with { MaxDailyApprovedChannels = 500 });
     }
 
     private sealed class FakeDailyQuotaRepository : IDailyQuotaRepository

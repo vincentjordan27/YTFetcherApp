@@ -4,6 +4,7 @@ using YtFetcher.Application.Backfill;
 using YtFetcher.Application.Backfill.DTO.Result;
 using YtFetcher.Application.Backfill.UseCases;
 using YtFetcher.Application.Quotas.DTO.Result;
+using YtFetcher.Application.Settings;
 using YtFetcher.Core.BackfillRuns;
 using YtFetcher.Core.Channels;
 using YtFetcher.Core.Quotas;
@@ -271,7 +272,7 @@ public class BackfillUseCaseTests
             gateway,
             quota,
             logger,
-            new FakePageLimitPolicy(),
+            new FakeGeneralSettingsProvider(),
             new FixedTimeProvider(Now));
 
         return (useCase, repository, gateway, quota, logger);
@@ -312,9 +313,10 @@ public class BackfillUseCaseTests
         public override DateTimeOffset GetUtcNow() => utcNow;
     }
 
-    private sealed class FakePageLimitPolicy : IBackfillPageLimitPolicy
+    private sealed class FakeGeneralSettingsProvider : IGeneralSettingsProvider
     {
-        public int PageLimit => 3;
+        public Task<GeneralSettingsSnapshot> GetRequiredAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(GeneralSettingsSnapshot.Default with { BackfillPageLimit = 3 });
     }
 
     private sealed class FakeBackfillRepository : IBackfillRepository

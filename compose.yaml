@@ -26,13 +26,6 @@ services:
       Grafana__Username: ${GRAFANA_USERNAME:-}
       Grafana__Token: ${GRAFANA_TOKEN:-}
       YouTube__ApiKey: ${YOUTUBE_API_KEY:?YOUTUBE_API_KEY is required}
-      YouTube__QueriesDailyQuotaLimit: ${YOUTUBE_QUERIES_DAILY_QUOTA_LIMIT:-10000}
-      YouTube__VideoBatchGetStatsDailyQuotaLimit: ${YOUTUBE_VIDEO_BATCH_STATS_DAILY_QUOTA_LIMIT:-10000}
-      YouTube__SearchQueriesDailyQuotaLimit: ${YOUTUBE_SEARCH_QUERIES_DAILY_QUOTA_LIMIT:-100}
-      YouTube__DiscoveryMaxPagesPerKeywordPerRun: ${YOUTUBE_DISCOVERY_MAX_PAGES:-1}
-      YouTube__MaxDailyApprovedChannels: ${YOUTUBE_MAX_DAILY_APPROVED_CHANNELS:-100}
-      YouTube__BackfillPageLimit: ${YOUTUBE_BACKFILL_PAGE_LIMIT:-3}
-      YouTube__BackfillDispatchBatchSize: ${YOUTUBE_BACKFILL_DISPATCH_BATCH_SIZE:-10}
     volumes:
       - ${FIREBASE_ADMIN_SDK_PATH:-/dev/null}:/run/secrets/firebase-admin-sdk.json:ro
     networks:

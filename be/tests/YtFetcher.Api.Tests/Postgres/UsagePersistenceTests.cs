@@ -87,7 +87,7 @@ public class UsagePersistenceTests : IAsyncLifetime
         new(new DbContextOptionsBuilder<YtFetcherDbContext>().UseNpgsql(connectionString).Options);
 
     private DailyQuotaRepository CreateRepository() =>
-        new(dbContext, new StubAppSettingsService(), TimeProvider.System);
+        new(dbContext, new StubGeneralSettingsProvider(), TimeProvider.System);
 
     private async Task SeedLedgerRowAsync(bool isDeleted)
     {
@@ -109,20 +109,9 @@ public class UsagePersistenceTests : IAsyncLifetime
         await dbContext.SaveChangesAsync();
     }
 
-    private sealed class StubAppSettingsService : IAppSettingsService
+    private sealed class StubGeneralSettingsProvider : IGeneralSettingsProvider
     {
-        public string? GetValue(string key) => key switch
-        {
-            QuotaConfigurationKeys.QueriesDailyQuotaLimit => "10000",
-            QuotaConfigurationKeys.VideoBatchGetStatsDailyQuotaLimit => "10000",
-            QuotaConfigurationKeys.SearchQueriesDailyQuotaLimit => "100",
-            QuotaConfigurationKeys.MaxDailyApprovedChannels => "500",
-            _ => null
-        };
-
-        public string GetRequiredValue(string key) =>
-            GetValue(key) ?? throw new InvalidOperationException($"Missing {key}.");
-
-        public T GetRequiredSection<T>(string sectionName) where T : class => throw new NotSupportedException();
+        public Task<YtFetcher.Application.Settings.GeneralSettingsSnapshot> GetRequiredAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(YtFetcher.Application.Settings.GeneralSettingsSnapshot.Default with { MaxDailyApprovedChannels = 500 });
     }
 }

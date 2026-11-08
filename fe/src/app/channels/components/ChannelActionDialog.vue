@@ -23,11 +23,7 @@ const dialogTitleId = 'channel-action-dialog-title'
 
 const selectedCount = computed(() => props.selectionCount ?? (props.channel === null ? 0 : 1))
 
-const reasonInvalid = computed(
-  () => props.kind === 'reject' && props.rejectionReason.trim().length === 0,
-)
-
-const confirmDisabled = computed(() => props.pending || reasonInvalid.value)
+const confirmDisabled = computed(() => props.pending)
 
 function confirmLabel(): string {
   if (props.pending) return props.kind === 'approve' ? 'Approving…' : 'Rejecting…'
@@ -97,7 +93,7 @@ function confirmLabel(): string {
         This channel will be removed from review.
       </p>
       <label v-if="kind === 'reject'" class="channel-action-dialog__reason">
-        <span class="channel-action-dialog__reason-label">Rejection reason</span>
+        <span class="channel-action-dialog__reason-label">Rejection reason (optional)</span>
         <textarea
           class="channel-action-dialog__reason-input"
           :value="rejectionReason"
@@ -116,7 +112,7 @@ function confirmLabel(): string {
         {{ selectedCount }} selected channels will be {{ kind === 'approve' ? 'approved and scheduled for backfill.' : 'rejected with the same reason.' }}
       </p>
       <label v-if="kind === 'reject'" class="channel-action-dialog__reason">
-        <span class="channel-action-dialog__reason-label">Rejection reason</span>
+        <span class="channel-action-dialog__reason-label">Rejection reason (optional)</span>
         <textarea
           class="channel-action-dialog__reason-input"
           :value="rejectionReason"

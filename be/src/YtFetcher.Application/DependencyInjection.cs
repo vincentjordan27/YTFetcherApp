@@ -6,6 +6,7 @@ using YtFetcher.Application.BackfillRuns.UseCases;
 using YtFetcher.Application.Channels.UseCases;
 using YtFetcher.Application.Discovery.UseCases;
 using YtFetcher.Application.DiscoveryKeywords.UseCases;
+using YtFetcher.Application.Settings.UseCases;
 using YtFetcher.Application.Usage.UseCases;
 using YtFetcher.Application.Videos.UseCases;
 
@@ -31,6 +32,8 @@ public static class DependencyInjection
         services.AddScoped<IDiscoveryKeywordUseCase, DiscoveryKeywordUseCase>();
         services.AddScoped<IBackfillRunUseCase, BackfillRunUseCase>();
         services.AddScoped<IRunBackfillClearHistoryUseCase, BackfillClearHistoryUseCase>();
+        services.AddScoped<IGetGeneralSettingsUseCase, GetGeneralSettingsUseCase>();
+        services.AddScoped<IUpdateGeneralSettingsUseCase, UpdateGeneralSettingsUseCase>();
 
         if (authenticationEnabled)
         {

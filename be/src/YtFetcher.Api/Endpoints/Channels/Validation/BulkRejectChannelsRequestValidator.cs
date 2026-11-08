@@ -26,8 +26,6 @@ public sealed class BulkRejectChannelsRequestValidator : AbstractValidator<BulkR
             .OverridePropertyName("channelIds");
 
         RuleFor(request => request.Reason)
-            .NotEmpty()
-            .WithMessage("A rejection reason is required.")
             .MaximumLength(Channel.RejectionReasonMaxLength)
             .WithMessage($"A rejection reason cannot exceed {Channel.RejectionReasonMaxLength} characters.")
             .OverridePropertyName("reason");

@@ -4,6 +4,7 @@ using System.Net;
 using System.Text.Json;
 using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Discovery.DTO.Result;
+using YtFetcher.Application.YouTube;
 using YtFetcher.Infrastructure.YouTube.DTO.Request;
 using YtFetcher.Infrastructure.YouTube.DTO.Response;
 using YtFetcher.Infrastructure.Configuration;
@@ -15,9 +16,6 @@ public sealed class YouTubeChannelDiscoveryClient(
     IAppSettingsService appSettingsService,
     ILogger<YouTubeChannelDiscoveryClient> logger) : IYouTubeChannelDiscoveryGateway
 {
-    private const int MaxChannelIdsPerRequest = 50;
-    private const int MaxSearchResults = 25;
-
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -97,10 +95,10 @@ public sealed class YouTubeChannelDiscoveryClient(
             return YouTubeChannelMetadataResult.Completed([]);
         }
 
-        if (channelIds.Count > MaxChannelIdsPerRequest)
+        if (channelIds.Count > YouTubeApiLimits.MaxResourceIdsPerRequest)
         {
             throw new ArgumentException(
-                $"A discovery metadata lookup cannot exceed {MaxChannelIdsPerRequest} channel ids.",
+                $"A discovery metadata lookup cannot exceed {YouTubeApiLimits.MaxResourceIdsPerRequest} channel ids.",
                 nameof(channelIds));
         }
 
@@ -185,7 +183,7 @@ public sealed class YouTubeChannelDiscoveryClient(
             "type=video",
             "videoDuration=short",
             "order=date",
-            $"maxResults={MaxSearchResults}",
+            $"maxResults={YouTubeApiLimits.DiscoverySearchResultsPerPage}",
             $"q={Uri.EscapeDataString(request.Keyword)}"
         };
 

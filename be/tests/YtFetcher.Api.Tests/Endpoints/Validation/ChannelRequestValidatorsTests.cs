@@ -36,11 +36,10 @@ public class ChannelRequestValidatorsTests
     [Theory]
     [InlineData("   ")]
     [InlineData("")]
-    public async Task Reject_validator_requires_a_non_blank_reason(string reason)
+    public async Task Reject_validator_accepts_a_blank_reason(string reason)
     {
         var result = await new RejectChannelRequestValidator().ValidateAsync(new RejectChannelRequest(reason));
 
-        Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, failure => failure.PropertyName == "reason");
+        Assert.True(result.IsValid);
     }
 }

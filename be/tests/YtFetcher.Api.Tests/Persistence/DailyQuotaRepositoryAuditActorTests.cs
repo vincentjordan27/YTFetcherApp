@@ -19,7 +19,7 @@ public class DailyQuotaRepositoryAuditActorTests
         await using var context = new YtFetcherDbContext(new DbContextOptionsBuilder<YtFetcherDbContext>()
             .UseInMemoryDatabase($"yt-fetcher-quota-audit-{Guid.NewGuid():N}")
             .Options);
-        var repository = new DailyQuotaRepository(context, new StubAppSettingsService(), TimeProvider.System);
+        var repository = new DailyQuotaRepository(context, new StubGeneralSettingsProvider(), TimeProvider.System);
 
         await repository.EnsureLedgerAsync(QuotaDate, CancellationToken.None);
 
@@ -33,15 +33,9 @@ public class DailyQuotaRepositoryAuditActorTests
         Assert.Equal(User.SystemUserId, claimed.ModifiedByUserId);
     }
 
-    private sealed class StubAppSettingsService : IAppSettingsService
+    private sealed class StubGeneralSettingsProvider : IGeneralSettingsProvider
     {
-        public string? GetValue(string key) =>
-            key == QuotaConfigurationKeys.MaxDailyApprovedChannels ? "500" : null;
-
-        public string GetRequiredValue(string key) => GetValue(key)
-            ?? throw new InvalidOperationException($"Missing test setting: {key}");
-
-        public T GetRequiredSection<T>(string sectionName) where T : class =>
-            throw new NotSupportedException();
+        public Task<YtFetcher.Application.Settings.GeneralSettingsSnapshot> GetRequiredAsync(CancellationToken cancellationToken) =>
+            Task.FromResult(YtFetcher.Application.Settings.GeneralSettingsSnapshot.Default with { MaxDailyApprovedChannels = 500 });
     }
 }

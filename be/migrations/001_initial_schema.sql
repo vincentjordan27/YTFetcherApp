@@ -34,6 +34,29 @@ CREATE TABLE users (
 
 CREATE UNIQUE INDEX uq_users_email_lower ON users (lower(email));
 
+CREATE TABLE general_settings (
+    id SMALLINT PRIMARY KEY CHECK (id = 1),
+    queries_daily_quota_limit INTEGER NOT NULL,
+    video_batch_get_stats_daily_quota_limit INTEGER NOT NULL,
+    search_queries_daily_quota_limit INTEGER NOT NULL,
+    discovery_max_pages_per_keyword_per_run INTEGER NOT NULL,
+    max_daily_approved_channels INTEGER NOT NULL,
+    backfill_page_limit INTEGER NOT NULL,
+    backfill_dispatch_batch_size INTEGER NOT NULL,
+    minimum_subscriber_count BIGINT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    created_by UUID NULL,
+    modified_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    modified_by UUID NULL,
+
+    CONSTRAINT fk_general_settings_created_by
+        FOREIGN KEY (created_by)
+        REFERENCES users(id),
+    CONSTRAINT fk_general_settings_modified_by
+        FOREIGN KEY (modified_by)
+        REFERENCES users(id)
+);
+
 INSERT INTO users (
     id,
     firebase_uid,
@@ -54,6 +77,31 @@ VALUES (
     FALSE,
     now(),
     now());
+
+INSERT INTO general_settings (
+    id,
+    queries_daily_quota_limit,
+    video_batch_get_stats_daily_quota_limit,
+    search_queries_daily_quota_limit,
+    discovery_max_pages_per_keyword_per_run,
+    max_daily_approved_channels,
+    backfill_page_limit,
+    backfill_dispatch_batch_size,
+    minimum_subscriber_count,
+    created_by,
+    modified_by)
+VALUES (
+    1,
+    10000,
+    10000,
+    100,
+    1,
+    100,
+    3,
+    10,
+    NULL,
+    '00000000-0000-0000-0000-000000000001',
+    '00000000-0000-0000-0000-000000000001');
 
 CREATE TABLE auth_login_events (
     id BIGSERIAL PRIMARY KEY,

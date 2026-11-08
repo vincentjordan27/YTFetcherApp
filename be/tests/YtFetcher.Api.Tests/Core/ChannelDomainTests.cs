@@ -81,15 +81,17 @@ public class ChannelDomainTests
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Reject_with_a_blank_reason_throws_without_mutating_state(string reason)
+    public void Reject_with_a_blank_reason_stores_no_reason(string? reason)
     {
         var channel = CreatePendingChannel();
 
-        Assert.Throws<ArgumentException>(() => channel.Reject(TransitionTime, AuditUserId, reason));
-        Assert.Equal(ChannelStatus.PENDING, channel.Status);
-        Assert.Null(channel.RejectedAt);
+        var transitioned = channel.Reject(TransitionTime, AuditUserId, reason);
+
+        Assert.True(transitioned);
+        Assert.Equal(ChannelStatus.REJECTED, channel.Status);
+        Assert.Equal(TransitionTime, channel.RejectedAt);
         Assert.Null(channel.RejectionReason);
-        Assert.Equal(Earlier, channel.ModifiedAt);
+        Assert.Equal(TransitionTime, channel.ModifiedAt);
     }
 
     [Fact]

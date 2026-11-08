@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthentication } from '@/app/auth/composables/useAuthentication'
 import logoUrl from '@/common/assets/yt-fetcher-logo.png'
 import { useAppShellCounts } from '@/common/composables/useAppShellCounts'
 import { designAppShell } from '@/common/data/app-shell.design-data'
 import type { AppTabItem } from '@/common/components/AppTabs.vue'
+import GeneralSettingsDialog from '@/app/settings/components/GeneralSettingsDialog.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { badgeFor } = useAppShellCounts()
 const { authenticationEnabled, identity, logout } = useAuthentication()
+const settingsOpen = ref(false)
 
 /** Labels and routes stay static; the two live badges come from the shell counts composable. */
 const navigation = computed<readonly AppTabItem[]>(() =>
@@ -93,6 +95,7 @@ async function handleLogout(): Promise<void> {
       </nav>
     </div>
     <div class="app-sidebar__bottom">
+      <button type="button" class="app-sidebar__logout" title="General Settings" aria-label="General Settings" @click="settingsOpen = true"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19.14 12.94a7.49 7.49 0 000-1.88l2.03-1.58-2-3.46-2.39.96a7.2 7.2 0 00-1.63-.94L14.8 3h-4l-.35 3.04c-.58.24-1.13.55-1.63.94l-2.39-.96-2 3.46 2.03 1.58a7.49 7.49 0 000 1.88l-2.03 1.58 2 3.46 2.39-.96c.5.39 1.05.7 1.63.94L10.8 21h4l.35-3.04c.58-.24 1.13-.55 1.63-.94l2.39.96 2-3.46-2.03-1.58zM12.8 15a3 3 0 110-6 3 3 0 010 6z" /></svg></button>
       <div v-if="operator" class="app-sidebar__user">
         <button type="button" class="app-sidebar__operator" :aria-label="`User profile: ${operator.name}`">{{ operator.initials }}</button>
         <div class="app-sidebar__tooltip">
@@ -112,6 +115,7 @@ async function handleLogout(): Promise<void> {
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" /></svg>
       </button>
     </div>
+    <GeneralSettingsDialog :open="settingsOpen" @close="settingsOpen = false" />
   </aside>
 </template>
 

@@ -86,10 +86,7 @@ export function usePendingChannelReview() {
     failed: evidenceFailed.value,
   }))
 
-  const canSubmitRejection = computed(() => {
-    const reason = rejectReason.value.trim()
-    return reason.length > 0 && reason.length <= REJECTION_REASON_MAX_LENGTH
-  })
+  const canSubmitRejection = computed(() => rejectReason.value.trim().length <= REJECTION_REASON_MAX_LENGTH)
   const selectedCount = computed(() => selectedIds.value.size)
   const selectedIdList = computed(() => [...selectedIds.value])
 

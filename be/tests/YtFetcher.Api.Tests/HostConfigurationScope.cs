@@ -3,10 +3,8 @@ using YtFetcher.Infrastructure.Persistence;
 namespace YtFetcher.Api.Tests;
 
 /// <summary>
-/// Temporarily supplies every configuration value that <c>AddInfrastructure</c> validates at startup:
-/// the database connection values, the YouTube backfill limits and page limit, and the daily
-/// processing dispatch bound. The host
-/// tests use it so a Development host can start without a local runtime configuration file.
+/// Temporarily supplies the database connection values and authentication mode required for a Development
+/// host to start without a local runtime configuration file.
 /// </summary>
 public sealed class HostConfigurationScope : IDisposable
 {
@@ -18,13 +16,6 @@ public sealed class HostConfigurationScope : IDisposable
             ["Database__Name"] = "yt_fetcher",
             ["Database__Username"] = "yt_fetcher_admin",
             ["Database__Password"] = "test-password",
-            ["YouTube__QueriesDailyQuotaLimit"] = "10000",
-            ["YouTube__VideoBatchGetStatsDailyQuotaLimit"] = "10000",
-            ["YouTube__SearchQueriesDailyQuotaLimit"] = "100",
-            ["YouTube__DiscoveryMaxPagesPerKeywordPerRun"] = "1",
-            ["YouTube__MaxDailyApprovedChannels"] = "500",
-            ["YouTube__BackfillPageLimit"] = "3",
-            ["YouTube__BackfillDispatchBatchSize"] = "10",
             // The authentication mode is explicit for every host test: Production requires the value, and an
             // anonymous Development host is the default this suite has always exercised.
             ["Auth__Enabled"] = "false",

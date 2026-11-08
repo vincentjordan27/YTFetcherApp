@@ -4,6 +4,7 @@ using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Abstractions.UseCases;
 using YtFetcher.Application.Discovery.DTO.Result;
 using YtFetcher.Application.Quotas.DTO.Result;
+using YtFetcher.Application.YouTube;
 using YtFetcher.Core.Discovery;
 
 namespace YtFetcher.Application.Discovery.UseCases;
@@ -18,16 +19,16 @@ public sealed class RunChannelDiscoveryUseCase(
     IDailyQuotaRepository dailyQuotaRepository,
     IDiscoveryActivityLogger discoveryActivityLogger,
     TimeProvider timeProvider,
-    IDiscoveryPageLimitPolicy pageLimitPolicy) : IRunChannelDiscoveryUseCase
+    IGeneralSettingsProvider generalSettingsProvider) : IRunChannelDiscoveryUseCase
 {
-    private const int ChannelMetadataChunkSize = 50;
     private const string QuotaLimitReachedReason = "QuotaLimitReached";
 
     public async Task<ChannelDiscoveryRunSummary> RunAsync(CancellationToken cancellationToken)
     {
         var startedAt = timeProvider.GetUtcNow();
         var quotaDate = PacificQuotaWindow.GetQuotaDate(startedAt);
-        var pageLimit = pageLimitPolicy.PageLimit;
+        var settings = await generalSettingsProvider.GetRequiredAsync(cancellationToken);
+        var pageLimit = settings.DiscoveryMaxPagesPerKeywordPerRun;
 
         var keywords = await discoveryRepository.GetActiveKeywordsAsync(cancellationToken);
         var states = await discoveryRepository.GetStatesForKeywordsAsync(
@@ -125,7 +126,7 @@ public sealed class RunChannelDiscoveryUseCase(
                 var metadataByChannelId = new Dictionary<string, YouTubeChannelMetadata>(StringComparer.Ordinal);
                 var metadataBlockedReason = (string?)null;
 
-                foreach (var chunk in channelIds.Chunk(ChannelMetadataChunkSize))
+                foreach (var chunk in channelIds.Chunk(YouTubeApiLimits.MaxResourceIdsPerRequest))
                 {
                     var metadataReservation = await dailyQuotaRepository.TryReserveQueriesUnitAsync(
                         quotaDate,
@@ -202,7 +203,8 @@ public sealed class RunChannelDiscoveryUseCase(
                     search.NextPageToken,
                     timeProvider.GetUtcNow(),
                     cancellationToken,
-                    quotaDate);
+                    quotaDate,
+                    settings.MinimumSubscriberCount);
 
                 channelMetadataMisses += pageMetadataMisses;
                 channelsCreated += persistResult.ChannelsCreated;

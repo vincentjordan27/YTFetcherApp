@@ -3,6 +3,7 @@ using YtFetcher.Application.Quotas;
 using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Abstractions.UseCases;
 using YtFetcher.Application.Backfill.DTO.Result;
+using YtFetcher.Application.YouTube;
 using YtFetcher.Application.Quotas.DTO.Result;
 using YtFetcher.Core.BackfillRuns;
 using YtFetcher.Core.Channels;
@@ -19,7 +20,7 @@ public sealed class BackfillUseCase(
     IYouTubeBackfillGateway youTubeBackfillGateway,
     IDailyQuotaRepository dailyQuotaRepository,
     IBackfillActivityLogger backfillActivityLogger,
-    IBackfillPageLimitPolicy backfillPageLimitPolicy,
+    IGeneralSettingsProvider generalSettingsProvider,
     TimeProvider timeProvider) : IBackfillUseCase
 {
     /// <summary>Safe operator-facing reason for a failed page-persistence transaction.</summary>
@@ -50,12 +51,6 @@ public sealed class BackfillUseCase(
     private const string RetryRequestedMessage =
         "The backfill attempt failed and was recorded. A retry is required.";
 
-    /// <summary>
-    /// The uploads page is requested with <c>maxResults=50</c>; anything beyond that is a provider
-    /// contract violation and is trimmed so one statistics call can never exceed the batch size.
-    /// </summary>
-    private const int MaxUploadsPerPage = 50;
-
     public async Task RunPageAsync(
         Guid channelId,
         BackfillTriggerSource triggerSource,
@@ -64,6 +59,7 @@ public sealed class BackfillUseCase(
         var claimToken = Guid.NewGuid();
         var runStartedAt = timeProvider.GetUtcNow();
         var quotaDate = PacificQuotaWindow.GetQuotaDate(runStartedAt);
+        var settings = await generalSettingsProvider.GetRequiredAsync(cancellationToken);
 
         var channel = await backfillRepository.TryClaimPageAsync(
             channelId,
@@ -159,9 +155,9 @@ public sealed class BackfillUseCase(
             uploadItems.Add(item);
         }
 
-        if (uploadItems.Count > MaxUploadsPerPage)
+        if (uploadItems.Count > YouTubeApiLimits.MaxPlaylistItemsPerPage)
         {
-            uploadItems = uploadItems.Take(MaxUploadsPerPage).ToList();
+            uploadItems = uploadItems.Take(YouTubeApiLimits.MaxPlaylistItemsPerPage).ToList();
         }
 
         // The product boundary is the frozen cutoff, never the cursor: a page that walked past the horizon
@@ -170,7 +166,7 @@ public sealed class BackfillUseCase(
         var crossedCutoff = uploadItems.Any(
             item => item.PublishedAt is { } publishedAt && publishedAt < effectiveCutoff);
 
-        var pageLimit = backfillPageLimitPolicy.PageLimit;
+        var pageLimit = settings.BackfillPageLimit;
         var reachedPageLimit = pageLimit > 0 && channel.BackfillPagesCompleted + 1 >= pageLimit;
         var isChannelComplete = page.NextPageToken is null || crossedCutoff || reachedPageLimit;
 

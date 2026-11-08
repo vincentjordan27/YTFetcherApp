@@ -650,17 +650,15 @@ public sealed class Channel : AuditableEntity
 
     /// <summary>
     /// Applies the rejection lifecycle transition from either <see cref="ChannelStatus.PENDING"/> or
-    /// <see cref="ChannelStatus.APPROVED"/> and stores the trimmed reason. Returns <c>false</c>
-    /// without mutating state for any other status. A blank or overlong reason is rejected before
-    /// any state change. Only lifecycle, rejection, and modified-audit fields change; backfill
+    /// <see cref="ChannelStatus.APPROVED"/> and stores the trimmed reason when one is supplied.
+    /// Returns <c>false</c> without mutating state for any other status. An overlong reason is
+    /// rejected before any state change. Only lifecycle, rejection, and modified-audit fields change; backfill
     /// state is deliberately left untouched.
     /// </summary>
-    public bool Reject(DateTimeOffset utcNow, Guid? rejectedByUserId, string reason)
+    public bool Reject(DateTimeOffset utcNow, Guid? rejectedByUserId, string? reason)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(reason);
-
-        var trimmedReason = reason.Trim();
-        if (trimmedReason.Length > RejectionReasonMaxLength)
+        var trimmedReason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        if (trimmedReason is { Length: > RejectionReasonMaxLength })
         {
             throw new ArgumentException(
                 $"A rejection reason cannot exceed {RejectionReasonMaxLength} characters.",

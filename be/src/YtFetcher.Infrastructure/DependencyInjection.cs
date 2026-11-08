@@ -1,4 +1,3 @@
-using System.Globalization;
 using Hangfire.PostgreSql;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
@@ -24,8 +23,6 @@ namespace YtFetcher.Infrastructure;
 
 public static class DependencyInjection
 {
-    private const int MinimumDailyQuotaLimit = 1;
-
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration,
@@ -38,18 +35,17 @@ public static class DependencyInjection
         services.AddScoped<IDiscoveryRepository, DiscoveryRepository>();
         services.AddScoped<IDiscoveryKeywordRepository, DiscoveryKeywordRepository>();
         services.AddScoped<IDiscoveryActivityLogger, DiscoveryActivityLogger>();
-        services.AddSingleton<IDiscoveryPageLimitPolicy, DiscoveryPageLimitPolicy>();
         services.AddScoped<IBackfillRepository, BackfillRepository>();
         services.AddScoped<IBackfillRunRepository, BackfillRunRepository>();
         services.AddScoped<IDailyQuotaRepository, DailyQuotaRepository>();
+        services.AddScoped<IGeneralSettingsRepository, GeneralSettingsRepository>();
+        services.AddScoped<IGeneralSettingsProvider, GeneralSettingsProvider>();
         services.AddScoped<INewUploadMonitoringRepository, NewUploadMonitoringRepository>();
         services.AddScoped<IVideoRepository, VideoRepository>();
         services.AddScoped<IVideoStatisticsRepository, VideoStatisticsRepository>();
         services.AddScoped<IBackfillActivityLogger, BackfillActivityLogger>();
         services.AddScoped<INewUploadMonitorActivityLogger, NewUploadMonitorActivityLogger>();
         services.AddScoped<IBackfillScheduler, HangfireBackfillScheduler>();
-        services.AddSingleton<IBackfillPageLimitPolicy, BackfillPageLimitPolicy>();
-        services.AddSingleton<IBackfillDispatchBatchSizePolicy, BackfillDispatchBatchSizePolicy>();
         services.AddTransient<ChannelDiscoveryHangfireJob>();
         services.AddTransient<ChannelBackfillHangfireJob>();
         services.AddTransient<DailyProcessingHangfireJob>();
@@ -69,14 +65,6 @@ public static class DependencyInjection
             services.AddSingleton<IApplicationSessionTokenValidator, ApplicationSessionTokenValidator>();
             services.AddSingleton<IFirebaseIdentityVerifier, FirebaseIdentityVerifier>();
         }
-
-        // The backfill limits and batch size are startup requirements: a missing or invalid value
-        // must stop the host with a readable error instead of failing later inside a job.
-        var startupSettings = new AppSettingsService(configuration);
-        ValidateYouTubeBackfillOptions(startupSettings);
-        ValidateBackfillPageLimit(startupSettings);
-        ValidateBackfillDispatchBatchSize(startupSettings);
-        ValidateDiscoveryPageLimit(startupSettings);
 
         var databaseOptions = configuration
             .GetSection(DatabaseOptions.SectionName)
@@ -122,71 +110,6 @@ public static class DependencyInjection
             .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(connectionString)));
 
         return services;
-    }
-
-    private static void ValidateYouTubeBackfillOptions(IAppSettingsService appSettingsService)
-    {
-        var queriesLimit = ReadRequiredInt(
-            appSettingsService,
-            QuotaConfigurationKeys.QueriesDailyQuotaLimit);
-        var batchStatsLimit = ReadRequiredInt(
-            appSettingsService,
-            QuotaConfigurationKeys.VideoBatchGetStatsDailyQuotaLimit);
-        var searchLimit = ReadRequiredInt(
-            appSettingsService,
-            QuotaConfigurationKeys.SearchQueriesDailyQuotaLimit);
-        var maxApprovedChannels = ReadRequiredInt(
-            appSettingsService,
-            QuotaConfigurationKeys.MaxDailyApprovedChannels);
-
-        if (queriesLimit < MinimumDailyQuotaLimit ||
-            batchStatsLimit < MinimumDailyQuotaLimit ||
-            searchLimit < MinimumDailyQuotaLimit)
-        {
-            throw new InvalidOperationException(
-                "Every daily provider quota limit must be at least " + MinimumDailyQuotaLimit + ".");
-        }
-
-        if (maxApprovedChannels <= 0)
-        {
-            throw new InvalidOperationException(
-                $"Configuration value '{QuotaConfigurationKeys.MaxDailyApprovedChannels}' must be greater than 0.");
-        }
-
-        if (maxApprovedChannels > queriesLimit || maxApprovedChannels > batchStatsLimit)
-        {
-            throw new InvalidOperationException(
-                $"Configuration value '{QuotaConfigurationKeys.MaxDailyApprovedChannels}' cannot exceed " +
-                $"'{QuotaConfigurationKeys.QueriesDailyQuotaLimit}' or " +
-                $"'{QuotaConfigurationKeys.VideoBatchGetStatsDailyQuotaLimit}'.");
-        }
-    }
-
-    /// <summary>
-    /// Constructs the page-limit policy once while the host is built so a missing, non-numeric, or
-    /// negative page limit stops startup with the policy's readable sentence.
-    /// </summary>
-    private static void ValidateBackfillPageLimit(IAppSettingsService appSettingsService) =>
-        _ = new BackfillPageLimitPolicy(appSettingsService);
-
-    /// <summary>
-    /// Constructs the dispatch-bound policy once while the host is built, so a missing, non-numeric, or
-    /// non-positive value stops startup with the policy's readable sentence.
-    /// </summary>
-    private static void ValidateBackfillDispatchBatchSize(IAppSettingsService appSettingsService) =>
-        _ = new BackfillDispatchBatchSizePolicy(appSettingsService);
-
-    private static void ValidateDiscoveryPageLimit(IAppSettingsService appSettingsService) =>
-        _ = new DiscoveryPageLimitPolicy(appSettingsService);
-
-    private static int ReadRequiredInt(IAppSettingsService appSettingsService, string key)
-    {
-        var value = appSettingsService.GetValue(key);
-
-        return int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed)
-            ? parsed
-            : throw new InvalidOperationException(
-                $"Configuration value '{key}' is missing or not a whole number.");
     }
 
     private static void ValidateDatabaseOptions(DatabaseOptions options)
