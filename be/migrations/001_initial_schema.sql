@@ -326,8 +326,7 @@ CREATE TABLE videos (
     duration_millis BIGINT NOT NULL,
     current_views BIGINT NOT NULL DEFAULT 0,
     current_likes BIGINT NOT NULL DEFAULT 0,
-    is_reference BOOLEAN NOT NULL DEFAULT FALSE,
-    is_reference_used BOOLEAN NOT NULL DEFAULT TRUE,
+    reference_status VARCHAR(20) NOT NULL DEFAULT 'NONE',
     reference_set_by_user_id UUID NULL,
     reference_set_at TIMESTAMPTZ NULL,
     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
@@ -345,6 +344,8 @@ CREATE TABLE videos (
     stats_claimed_at TIMESTAMPTZ NULL,
 
     CONSTRAINT uq_videos_youtube_video_id UNIQUE (youtube_video_id),
+    CONSTRAINT ck_videos_reference_status
+        CHECK (reference_status IN ('NONE', 'UNUSED', 'USED', 'SKIPPED')),
     CONSTRAINT ck_videos_availability_status
         CHECK (availability_status IN ('AVAILABLE', 'UNAVAILABLE')),
     CONSTRAINT ck_videos_stats_claim_coherent
@@ -369,13 +370,8 @@ CREATE TABLE videos (
 CREATE INDEX ix_videos_stats_due
     ON videos (last_stats_fetched_at, id)
     WHERE is_deleted = FALSE
-      AND is_reference = FALSE
+      AND reference_status = 'NONE'
       AND tracking_status = 'ACTIVE';
-
-CREATE INDEX ix_videos_reference_recent
-    ON videos ((reference_set_at IS NULL), reference_set_at DESC, id DESC)
-    WHERE is_deleted = FALSE
-      AND is_reference = TRUE;
 
 CREATE TABLE video_snapshots (
     id BIGSERIAL PRIMARY KEY,

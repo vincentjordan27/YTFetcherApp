@@ -20,8 +20,12 @@ public class VideoReferenceEndpointTests
 {
     private static readonly DateTimeOffset Now = new(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
 
-    [Fact]
-    public async Task Mark_reference_returns_204_and_stops_the_selected_videos()
+    [Theory]
+    [InlineData("UNUSED", VideoReferenceStatus.UNUSED)]
+    [InlineData("SKIPPED", VideoReferenceStatus.SKIPPED)]
+    public async Task Active_videos_can_be_classified_and_are_stopped(
+        string requestedStatus,
+        VideoReferenceStatus expectedStatus)
     {
         using var factory = new ChannelApiFactory();
         using var hostConfiguration = new HostConfigurationScope();
@@ -32,15 +36,14 @@ public class VideoReferenceEndpointTests
 
         var response = await client.PostAsJsonAsync(
             "/api/videos/mark-reference",
-            new { videoIds = new[] { first, second } });
+            new { videoIds = new[] { first, second }, referenceStatus = requestedStatus });
 
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         var stored = await ReadVideosAsync(application, first, second);
         Assert.All(stored, video =>
         {
-            Assert.True(video.IsReference);
-            Assert.True(video.IsReferenceUsed);
+            Assert.Equal(expectedStatus, video.ReferenceStatus);
             Assert.Equal(VideoTrackingStatus.STOPPED, video.TrackingStatus);
         });
     }
@@ -57,7 +60,7 @@ public class VideoReferenceEndpointTests
 
         var response = await client.PostAsJsonAsync(
             "/api/videos/mark-reference",
-            new { videoIds = new[] { active, stopped } });
+            new { videoIds = new[] { active, stopped }, referenceStatus = "UNUSED" });
 
         Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
@@ -66,7 +69,7 @@ public class VideoReferenceEndpointTests
             document.RootElement.GetProperty("detail").GetString());
 
         var stored = await ReadVideosAsync(application, active);
-        Assert.False(Assert.Single(stored).IsReference);
+        Assert.Equal(VideoReferenceStatus.NONE, Assert.Single(stored).ReferenceStatus);
     }
 
     [Fact]
@@ -98,6 +101,65 @@ public class VideoReferenceEndpointTests
             client,
             new { videoIds = Enumerable.Range(0, 101).Select(_ => Guid.NewGuid()).ToArray() });
         await AssertVideoIdsProblemAsync(client, new { videoIds = new[] { id, id } });
+    }
+
+    [Fact]
+    public async Task Active_video_cannot_be_classified_directly_as_used_or_with_an_unknown_status()
+    {
+        using var factory = new ChannelApiFactory();
+        using var hostConfiguration = new HostConfigurationScope();
+        using var application = factory.WithWebHostBuilder(_ => { });
+        var videoId = await SeedVideoAsync(application, "v-active", "Active clip");
+        using var client = application.CreateClient();
+
+        var directUsed = await client.PostAsJsonAsync("/api/videos/mark-reference", new { videoIds = new[] { videoId }, referenceStatus = "USED" });
+        var unknown = await client.PostAsJsonAsync("/api/videos/mark-reference", new { videoIds = new[] { videoId }, referenceStatus = 99 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, directUsed.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, unknown.StatusCode);
+        Assert.Equal(VideoReferenceStatus.NONE, Assert.Single(await ReadVideosAsync(application, videoId)).ReferenceStatus);
+    }
+
+    [Fact]
+    public async Task Reference_status_filter_returns_only_the_requested_status_and_updates_total()
+    {
+        using var factory = new ChannelApiFactory();
+        using var hostConfiguration = new HostConfigurationScope();
+        using var application = factory.WithWebHostBuilder(_ => { });
+        var unusedId = await SeedVideoAsync(application, "v-unused", "Unused", isReference: true);
+        var usedId = await SeedVideoAsync(application, "v-used", "Used", isReference: true);
+        using var client = application.CreateClient();
+        await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId = usedId, referenceStatus = "USED" });
+
+        var response = await client.PostAsJsonAsync("/api/videos/reference/list", new { page = 1, pageSize = 10, referenceStatus = "USED" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(1, document.RootElement.GetProperty("totalCount").GetInt32());
+        Assert.Equal(usedId, Assert.Single(document.RootElement.GetProperty("items").EnumerateArray().ToList()).GetProperty("id").GetGuid());
+        Assert.NotEqual(unusedId, usedId);
+    }
+
+    [Fact]
+    public async Task Reference_status_filter_returns_skipped_videos()
+    {
+        using var factory = new ChannelApiFactory();
+        using var hostConfiguration = new HostConfigurationScope();
+        using var application = factory.WithWebHostBuilder(_ => { });
+        var skippedId = await SeedVideoAsync(application, "v-skipped", "Skipped", isReference: true);
+        using var client = application.CreateClient();
+
+        var update = await client.PostAsJsonAsync(
+            "/api/videos/reference/set-status",
+            new { videoId = skippedId, referenceStatus = "SKIPPED" });
+        var response = await client.PostAsJsonAsync(
+            "/api/videos/reference/list",
+            new { page = 1, pageSize = 10, referenceStatus = "SKIPPED" });
+
+        Assert.Equal(HttpStatusCode.NoContent, update.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(skippedId, Assert.Single(document.RootElement.GetProperty("items").EnumerateArray().ToList()).GetProperty("id").GetGuid());
     }
 
     [Fact]
@@ -133,7 +195,7 @@ public class VideoReferenceEndpointTests
         Assert.Equal(310, item.GetProperty("currentLikes").GetInt64());
         Assert.NotEqual(default, item.GetProperty("publishedAt").GetDateTimeOffset());
         Assert.NotEqual(default, item.GetProperty("lastStatsFetchedAt").GetDateTimeOffset());
-        Assert.True(item.GetProperty("isReferenceUsed").GetBoolean());
+        Assert.Equal("UNUSED", item.GetProperty("referenceStatus").GetString());
         Assert.NotEqual(default, item.GetProperty("referenceSetAt").GetDateTimeOffset());
     }
 
@@ -161,7 +223,7 @@ public class VideoReferenceEndpointTests
     }
 
     [Fact]
-    public async Task Set_reference_used_updates_the_current_usage_flag()
+    public async Task Reference_status_can_change_between_each_allowed_state()
     {
         using var factory = new ChannelApiFactory();
         using var hostConfiguration = new HostConfigurationScope();
@@ -169,14 +231,36 @@ public class VideoReferenceEndpointTests
         var videoId = await SeedVideoAsync(application, "v-reference", "Saved clip", isReference: true);
         using var client = application.CreateClient();
 
-        var markUsed = await client.PostAsJsonAsync("/api/videos/reference/set-used", new { videoId, isUsed = true });
-        var markUnused = await client.PostAsJsonAsync("/api/videos/reference/set-used", new { videoId, isUsed = false });
+        var markUsed = await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId, referenceStatus = "USED" });
+        var markUnused = await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId, referenceStatus = "UNUSED" });
+        var markSkipped = await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId, referenceStatus = "SKIPPED" });
+        var restoreUnused = await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId, referenceStatus = "UNUSED" });
 
         Assert.Equal(HttpStatusCode.NoContent, markUsed.StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, markUnused.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, markSkipped.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, restoreUnused.StatusCode);
         var stored = Assert.Single(await ReadVideosAsync(application, videoId));
-        Assert.True(stored.IsReference);
-        Assert.False(stored.IsReferenceUsed);
+        Assert.Equal(VideoReferenceStatus.UNUSED, stored.ReferenceStatus);
+    }
+
+    [Fact]
+    public async Task Reference_status_rejects_none_and_an_invalid_transition_without_writing()
+    {
+        using var factory = new ChannelApiFactory();
+        using var hostConfiguration = new HostConfigurationScope();
+        using var application = factory.WithWebHostBuilder(_ => { });
+        var videoId = await SeedVideoAsync(application, "v-reference", "Saved clip", isReference: true);
+        using var client = application.CreateClient();
+
+        var none = await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId, referenceStatus = "NONE" });
+        var skipped = await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId, referenceStatus = "SKIPPED" });
+        var invalidTransition = await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId, referenceStatus = "USED" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, none.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, skipped.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, invalidTransition.StatusCode);
+        Assert.Equal(VideoReferenceStatus.SKIPPED, Assert.Single(await ReadVideosAsync(application, videoId)).ReferenceStatus);
     }
 
     [Fact]
@@ -188,11 +272,11 @@ public class VideoReferenceEndpointTests
         var videoId = await SeedVideoAsync(application, "v-active", "Active clip");
         using var client = application.CreateClient();
 
-        var response = await client.PostAsJsonAsync("/api/videos/reference/set-used", new { videoId, isUsed = true });
+        var response = await client.PostAsJsonAsync("/api/videos/reference/set-status", new { videoId, referenceStatus = "USED" });
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var stored = Assert.Single(await ReadVideosAsync(application, videoId));
-        Assert.False(stored.IsReferenceUsed);
+        Assert.Equal(VideoReferenceStatus.NONE, stored.ReferenceStatus);
     }
 
     [Fact]
@@ -247,7 +331,7 @@ public class VideoReferenceEndpointTests
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
 
         var stored = Assert.Single(await ReadVideosAsync(application, videoId));
-        Assert.False(stored.IsReference);
+        Assert.Equal(VideoReferenceStatus.NONE, stored.ReferenceStatus);
         Assert.Equal(VideoTrackingStatus.ACTIVE, stored.TrackingStatus);
         Assert.Null(stored.ReferenceSetAt);
     }
@@ -274,7 +358,7 @@ public class VideoReferenceEndpointTests
 
         // The active row is untouched by a refused removal.
         var stored = Assert.Single(await ReadVideosAsync(application, activeId));
-        Assert.False(stored.IsReference);
+        Assert.Equal(VideoReferenceStatus.NONE, stored.ReferenceStatus);
         Assert.Equal(VideoTrackingStatus.ACTIVE, stored.TrackingStatus);
     }
 
@@ -333,7 +417,7 @@ public class VideoReferenceEndpointTests
         await SeedVideoAsync(application, "v-1", "One", isReference: true);
         using var client = application.CreateClient();
 
-        foreach (var field in new[] { "title", "views", "likes", "publishedAt", "lastUpdatedAt", "referenceSetAt", "referenceUsed" })
+        foreach (var field in new[] { "title", "views", "likes", "publishedAt", "lastUpdatedAt", "referenceSetAt", "referenceStatus" })
         {
             foreach (var direction in new[] { "asc", "desc" })
             {
@@ -394,8 +478,7 @@ public class VideoReferenceEndpointTests
             DurationMillis = 120_000,
             CurrentViews = 4_200,
             CurrentLikes = 310,
-            IsReference = isReference,
-            IsReferenceUsed = isReference,
+            ReferenceStatus = isReference ? VideoReferenceStatus.UNUSED : VideoReferenceStatus.NONE,
             ReferenceSetAt = isReference ? referenceSetAt ?? Now : null,
             TrackingStatus = isReference ? VideoTrackingStatus.STOPPED : trackingStatus,
             LastStatsFetchedAt = Now,

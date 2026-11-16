@@ -3,6 +3,7 @@ using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Abstractions.UseCases;
 using YtFetcher.Application.Videos.DTO.Request;
 using YtFetcher.Application.Videos.DTO.Response;
+using YtFetcher.Core.Videos;
 
 namespace YtFetcher.Application.Videos.UseCases;
 
@@ -61,11 +62,12 @@ public sealed class VideoUseCase(
             request.Page,
             request.PageSize,
             searchText,
+            request.ReferenceStatus,
             sortBy,
             sortDirection,
             cancellationToken);
 
-        var totalCount = await videoRepository.CountReferenceAsync(searchText, cancellationToken);
+        var totalCount = await videoRepository.CountReferenceAsync(searchText, request.ReferenceStatus, cancellationToken);
 
         var items = rows
             .Select(row => ReferenceVideoDto.ToDto(row.Video, row.ChannelName, row.YoutubeChannelId))
@@ -106,7 +108,7 @@ public sealed class VideoUseCase(
         // The all-or-nothing verification and transition live in the repository's short transaction.
         videoRepository.TryMarkAsReferenceAsync(
             request.VideoIds ?? [],
-            request.IsUsed ?? true,
+            request.ReferenceStatus ?? VideoReferenceStatus.UNUSED,
             currentActor.UserId,
             timeProvider.GetUtcNow(),
             cancellationToken);
@@ -122,12 +124,12 @@ public sealed class VideoUseCase(
             timeProvider.GetUtcNow(),
             cancellationToken);
 
-    public Task<bool> SetReferenceUsedAsync(
-        SetVideoReferenceUsedRequest request,
+    public Task<bool> SetReferenceStatusAsync(
+        SetVideoReferenceStatusRequest request,
         CancellationToken cancellationToken) =>
-        videoRepository.TrySetReferenceUsedAsync(
+        videoRepository.TrySetReferenceStatusAsync(
             request.VideoId,
-            request.IsUsed!.Value,
+            request.ReferenceStatus!.Value,
             currentActor.UserId,
             timeProvider.GetUtcNow(),
             cancellationToken);

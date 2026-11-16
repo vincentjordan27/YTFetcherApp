@@ -1,17 +1,19 @@
 <script setup lang="ts">
 import AppDialog from '@/common/components/AppDialog.vue'
+import type { VideoReferenceStatus } from '@/app/videos/types/video-reference-status'
+
+type ClassificationStatus = Exclude<VideoReferenceStatus, 'NONE' | 'USED'>
 
 defineProps<{
   open: boolean
   selectedCount: number
   pending: boolean
   error?: string | null
-  isUsed?: boolean
 }>()
 
 const emit = defineEmits<{
   close: []
-  confirm: []
+  confirm: [status: ClassificationStatus]
 }>()
 
 const dialogTitleId = 'mark-reference-dialog-title'
@@ -26,7 +28,7 @@ const dialogTitleId = 'mark-reference-dialog-title'
     @close="emit('close')"
   >
     <template #header>
-      <h2 :id="dialogTitleId" class="mark-reference-dialog__title">{{ isUsed ? 'Mark as reference' : 'Mark as unused' }}</h2>
+      <h2 :id="dialogTitleId" class="mark-reference-dialog__title">Add videos to Reference</h2>
       <button
         type="button"
         class="mark-reference-dialog__close"
@@ -41,7 +43,7 @@ const dialogTitleId = 'mark-reference-dialog-title'
     </template>
 
     <p class="mark-reference-dialog__body">
-      The selected videos will be marked as reference and will no longer receive daily stats updates.
+      Choose whether the selected videos are useful examples or should be skipped.
     </p>
     <p class="mark-reference-dialog__selection">{{ selectedCount }} videos selected.</p>
     <p v-if="error" class="mark-reference-dialog__error" role="alert">{{ error }}</p>
@@ -59,9 +61,17 @@ const dialogTitleId = 'mark-reference-dialog-title'
         type="button"
         class="mark-reference-dialog__button mark-reference-dialog__button--primary"
         :disabled="pending"
-        @click="emit('confirm')"
+        @click="emit('confirm', 'UNUSED')"
       >
-        <span>{{ pending ? 'Marking…' : isUsed ? 'Mark as reference' : 'Mark as unused' }}</span>
+        Save as unused reference
+      </button>
+      <button
+        type="button"
+        class="mark-reference-dialog__button mark-reference-dialog__button--secondary"
+        :disabled="pending"
+        @click="emit('confirm', 'SKIPPED')"
+      >
+        Skip
       </button>
     </template>
   </AppDialog>

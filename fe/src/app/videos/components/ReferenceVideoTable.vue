@@ -12,6 +12,7 @@ import type {
   ReferenceVideoTableState,
 } from '@/app/videos/types/reference-video.types'
 import type { VideoSort, VideoSortField } from '@/app/videos/types/video-sort.types'
+import type { ReferenceStatusFilter, VideoReferenceStatus } from '@/app/videos/types/video-reference-status'
 
 const props = defineProps<{
   tabs: readonly AppTabItem[]
@@ -23,9 +24,9 @@ const props = defineProps<{
   state: ReferenceVideoTableState
   stateMessage: string
   sort: VideoSort
-  sortLabel: string
+  statusFilter: ReferenceStatusFilter
   removePending: boolean
-  usagePending: boolean
+  statusPending: boolean
 }>()
 
 const emit = defineEmits<{
@@ -36,12 +37,19 @@ const emit = defineEmits<{
   'open-history': [row: ReferenceVideoRow]
   'open-preview': [row: ReferenceVideoRow]
   'remove-reference': [row: ReferenceVideoRow]
-  'toggle-reference-used': [row: ReferenceVideoRow]
+  'set-reference-status': [row: ReferenceVideoRow, status: Exclude<VideoReferenceStatus, 'NONE'>]
+  'set-status-filter': [status: ReferenceStatusFilter]
   'set-sort': [field: VideoSortField]
 }>()
 
 /** Thumbnail, title, views, likes, published, age, last update, reference date, usage, row actions. */
 const COLUMN_COUNT = 10
+const STATUS_FILTERS: readonly { value: ReferenceStatusFilter; label: string }[] = [
+  { value: 'ALL', label: 'All' },
+  { value: 'UNUSED', label: 'Unused' },
+  { value: 'USED', label: 'Used' },
+  { value: 'SKIPPED', label: 'Skipped' },
+]
 
 const showRows = () => props.state === 'ready'
 
@@ -98,11 +106,16 @@ function channelUrl(youtubeChannelId: string): string {
                 @input="emit('update:search-query', ($event.target as HTMLInputElement).value)"
               />
             </label>
-            <div class="toolbar__rank">
-              <svg class="toolbar__rank-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
-              </svg>
-              <span>Ranked by:</span><span class="toolbar__rank-value">{{ sortLabel }}</span>
+            <div class="reference-status-filter" role="group" aria-label="Filter reference status">
+              <button
+                v-for="filter in STATUS_FILTERS"
+                :key="filter.value"
+                type="button"
+                class="reference-status-filter__button"
+                :class="{ 'reference-status-filter__button--active': statusFilter === filter.value }"
+                :aria-pressed="statusFilter === filter.value"
+                @click="emit('set-status-filter', filter.value)"
+              >{{ filter.label }}</button>
             </div>
           </div>
         </div>
@@ -149,10 +162,10 @@ function channelUrl(youtubeChannelId: string): string {
                     <span v-if="props.sort.field === 'referenceSetAt'" class="video-table__sort-icon" :class="{ 'video-table__sort-icon--desc': props.sort.direction === 'desc' }" aria-hidden="true"></span>
                   </button>
                 </th>
-                <th :aria-sort="toAriaSort(props.sort, 'referenceUsed')">
-                  <button type="button" class="video-table__sort" :aria-label="toVideoSortAriaLabel('referenceUsed')" @click="emit('set-sort', 'referenceUsed')">
-                    Usage
-                    <span v-if="props.sort.field === 'referenceUsed'" class="video-table__sort-icon" :class="{ 'video-table__sort-icon--desc': props.sort.direction === 'desc' }" aria-hidden="true"></span>
+                <th :aria-sort="toAriaSort(props.sort, 'referenceStatus')">
+                  <button type="button" class="video-table__sort" :aria-label="toVideoSortAriaLabel('referenceStatus')" @click="emit('set-sort', 'referenceStatus')">
+                    Status
+                    <span v-if="props.sort.field === 'referenceStatus'" class="video-table__sort-icon" :class="{ 'video-table__sort-icon--desc': props.sort.direction === 'desc' }" aria-hidden="true"></span>
                   </button>
                 </th>
                 <th class="video-table__action-heading"><span class="sr-only">Actions</span></th>
@@ -237,19 +250,18 @@ function channelUrl(youtubeChannelId: string): string {
               <td class="video-table__updated-cell">{{ row.lastStatsFetchedLabel }}</td>
               <td class="video-table__updated-cell">{{ row.referenceSetLabel }}</td>
               <td>
-                <span class="status-badge" :class="row.isReferenceUsed ? 'status-badge--used' : 'status-badge--unused'">
-                  {{ row.isReferenceUsed ? 'Used' : 'Unused' }}
+                <span class="status-badge" :class="`status-badge--${row.referenceStatus.toLowerCase()}`">
+                  {{ row.referenceStatus[0] + row.referenceStatus.slice(1).toLowerCase() }}
                 </span>
               </td>
               <td class="video-table__action-cell">
                 <VideoRowActionMenu
                   :label="row.title"
                   removable
-                  reference-usage
-                  :reference-used="row.isReferenceUsed"
-                  :busy="removePending || usagePending"
+                  :reference-status="row.referenceStatus"
+                  :busy="removePending || statusPending"
                   @history="emit('open-history', row)"
-                  @toggle-reference-used="emit('toggle-reference-used', row)"
+                  @set-reference-status="emit('set-reference-status', row, $event)"
                   @remove="emit('remove-reference', row)"
                 />
               </td>
@@ -316,5 +328,6 @@ function channelUrl(youtubeChannelId: string): string {
 <style lang="scss" scoped>
 @use '@/app/videos/styles/videos';
 @use '@/app/videos/styles/video-table';
+@use '@/app/videos/styles/reference-status-filter';
 @use '@/app/videos/styles/active-video-table';
 </style>

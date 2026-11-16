@@ -183,7 +183,7 @@ public class VideoHistoryEndpointTests
             DurationMillis = 120_000,
             CurrentViews = 500,
             CurrentLikes = 20,
-            IsReference = isReference,
+            ReferenceStatus = isReference ? VideoReferenceStatus.UNUSED : VideoReferenceStatus.NONE,
             TrackingStatus = isReference || stopped ? VideoTrackingStatus.STOPPED : VideoTrackingStatus.ACTIVE,
             LastStatsFetchedAt = Now,
             IsDeleted = deleted,

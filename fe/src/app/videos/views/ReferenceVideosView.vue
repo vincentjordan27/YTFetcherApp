@@ -18,7 +18,6 @@ const {
   currentPage,
   rowsPerPage,
   sort,
-  sortLabel,
   rows,
   pagination,
   tableState,
@@ -29,8 +28,10 @@ const {
   retry,
   removeReference,
   removePending,
-  toggleReferenceUsage,
-  usagePending,
+  statusFilter,
+  setStatusFilter,
+  updateReferenceStatus,
+  statusPending,
 } = useReferenceVideos()
 
 // Navigation only: the tab counts have no endpoint yet, so no badge is fabricated.
@@ -70,18 +71,19 @@ function openPreview(row: ReferenceVideoRow): void {
       :state="tableState.state"
       :state-message="tableState.message"
       :sort="sort"
-      :sort-label="sortLabel"
+      :status-filter="statusFilter"
       :remove-pending="removePending"
-      :usage-pending="usagePending"
+      :status-pending="statusPending"
       @update:search-query="updateSearchInput"
       @update:rows-per-page="updateRowsPerPage"
       @update:page="goToPage"
       @set-sort="setSort"
+      @set-status-filter="setStatusFilter"
       @retry="retry"
       @open-history="openHistory"
       @open-preview="openPreview"
       @remove-reference="removeReference"
-      @toggle-reference-used="toggleReferenceUsage"
+      @set-reference-status="updateReferenceStatus"
     />
     <VideoHistoryDialog
       :open="history.open.value"

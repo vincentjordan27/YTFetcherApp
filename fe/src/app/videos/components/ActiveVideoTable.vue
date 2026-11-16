@@ -20,7 +20,6 @@ const props = withDefaults(
     state: ActiveVideoTableState
     stateMessage: string
     sort: VideoSort
-    sortLabel: string
     selectedIds?: readonly string[]
     selectedCount?: number
     canMarkReference?: boolean
@@ -36,8 +35,8 @@ const emit = defineEmits<{
   'toggle-selection': [id: string]
   'toggle-visible-selection': []
   'open-mark-reference': []
-  'open-mark-single-reference': [row: ActiveVideoRow]
   'open-mark-single-unused': [row: ActiveVideoRow]
+  'open-skip-single-video': [row: ActiveVideoRow]
   'open-history': [row: ActiveVideoRow]
   'open-preview': [row: ActiveVideoRow]
   'set-sort': [field: VideoSortField]
@@ -110,12 +109,6 @@ function channelUrl(youtubeChannelId: string): string {
                 @input="emit('update:search-query', ($event.target as HTMLInputElement).value)"
               />
             </label>
-            <div class="toolbar__rank">
-              <svg class="toolbar__rank-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M10 18h4v-2h-4v2zM3 6v2h18V6H3zm3 7h12v-2H6v2z" />
-              </svg>
-              <span>Ranked by:</span><span class="toolbar__rank-value">{{ sortLabel }}</span>
-            </div>
             <button
               type="button"
               class="toolbar__mark"
@@ -125,7 +118,7 @@ function channelUrl(youtubeChannelId: string): string {
               <svg class="toolbar__mark-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
               </svg>
-              <span>Mark as reference</span>
+              <span>Classify selected</span>
               <span v-if="selectedCount > 0" class="toolbar__mark-count">{{ selectedCount }}</span>
             </button>
           </div>
@@ -270,10 +263,10 @@ function channelUrl(youtubeChannelId: string): string {
               <td class="video-table__action-cell">
                 <VideoRowActionMenu
                   :label="row.title"
-                  markable
                   mark-unused
-                  @mark="emit('open-mark-single-reference', row)"
+                  skip
                   @mark-unused="emit('open-mark-single-unused', row)"
+                  @skip="emit('open-skip-single-video', row)"
                   @history="emit('open-history', row)"
                 />
               </td>

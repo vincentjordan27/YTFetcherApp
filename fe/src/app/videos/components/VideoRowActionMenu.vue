@@ -1,17 +1,25 @@
 <script setup lang="ts">
 import { onBeforeUnmount, ref, watch } from 'vue'
+import type { VideoReferenceStatus } from '@/app/videos/types/video-reference-status'
 
-const props = withDefaults(defineProps<{ label: string; markable?: boolean; markUnused?: boolean; removable?: boolean; referenceUsage?: boolean; referenceUsed?: boolean; busy?: boolean }>(), {
-  markable: false,
+type ReferenceStatus = Exclude<VideoReferenceStatus, 'NONE'>
+
+const props = withDefaults(defineProps<{ label: string; markUnused?: boolean; skip?: boolean; removable?: boolean; referenceStatus?: ReferenceStatus; busy?: boolean }>(), {
   markUnused: false,
+  skip: false,
   removable: false,
-  referenceUsage: false,
   busy: false,
 })
 
-const emit = defineEmits<{ history: []; mark: []; 'mark-unused': []; remove: []; 'toggle-reference-used': [] }>()
+const emit = defineEmits<{
+  history: []
+  'mark-unused': []
+  skip: []
+  remove: []
+  'set-reference-status': [status: ReferenceStatus]
+}>()
 
-const PANEL_WIDTH = 168
+const PANEL_WIDTH = 210
 const PANEL_MARGIN = 8
 
 const open = ref(false)
@@ -50,14 +58,14 @@ function selectHistory(): void {
   emit('history')
 }
 
-function selectMark(): void {
-  close()
-  emit('mark')
-}
-
 function selectMarkUnused(): void {
   close()
   emit('mark-unused')
+}
+
+function selectSkip(): void {
+  close()
+  emit('skip')
 }
 
 function selectRemove(): void {
@@ -65,9 +73,9 @@ function selectRemove(): void {
   emit('remove')
 }
 
-function selectToggleReferenceUsed(): void {
+function selectReferenceStatus(status: ReferenceStatus): void {
   close()
-  emit('toggle-reference-used')
+  emit('set-reference-status', status)
 }
 
 function handlePointerDown(event: PointerEvent): void {
@@ -114,8 +122,8 @@ onBeforeUnmount(() => {
       :aria-label="`More actions for ${props.label}`"
       aria-haspopup="menu"
       :aria-expanded="open"
-        :disabled="props.busy"
-        @click="toggle"
+      :disabled="props.busy"
+      @click="toggle"
     >
       <svg class="video-row-menu__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
         <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
@@ -124,23 +132,41 @@ onBeforeUnmount(() => {
 
     <Teleport to="body">
       <div v-if="open" ref="panelRef" class="video-row-menu__panel" role="menu" :style="panelStyle">
-        <button v-if="props.markable" type="button" class="video-row-menu__item" role="menuitem" @click="selectMark">
-          Mark as reference
-        </button>
         <button v-if="props.markUnused" type="button" class="video-row-menu__item" role="menuitem" @click="selectMarkUnused">
-          Mark as unused
+          Save as unused reference
+        </button>
+        <button v-if="props.skip" type="button" class="video-row-menu__item" role="menuitem" @click="selectSkip">
+          Skip
         </button>
         <button type="button" class="video-row-menu__item" role="menuitem" @click="selectHistory">
           History
         </button>
         <button
-          v-if="props.referenceUsage"
+          v-if="props.referenceStatus === 'UNUSED' || props.referenceStatus === 'USED'"
           type="button"
           class="video-row-menu__item"
           role="menuitem"
-          @click="selectToggleReferenceUsed"
+          @click="selectReferenceStatus(props.referenceStatus === 'USED' ? 'UNUSED' : 'USED')"
         >
-          {{ props.referenceUsed ? 'Mark as unused' : 'Mark as used' }}
+          {{ props.referenceStatus === 'USED' ? 'Mark as unused' : 'Mark as used' }}
+        </button>
+        <button
+          v-if="props.referenceStatus === 'UNUSED' || props.referenceStatus === 'USED'"
+          type="button"
+          class="video-row-menu__item"
+          role="menuitem"
+          @click="selectReferenceStatus('SKIPPED')"
+        >
+          Skip
+        </button>
+        <button
+          v-if="props.referenceStatus === 'SKIPPED'"
+          type="button"
+          class="video-row-menu__item"
+          role="menuitem"
+          @click="selectReferenceStatus('UNUSED')"
+        >
+          Mark as unused
         </button>
         <button
           v-if="props.removable"

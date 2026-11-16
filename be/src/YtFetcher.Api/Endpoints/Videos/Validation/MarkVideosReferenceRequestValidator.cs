@@ -1,5 +1,6 @@
 using FluentValidation;
 using YtFetcher.Application.Videos.DTO.Request;
+using YtFetcher.Core.Videos;
 
 namespace YtFetcher.Api.Endpoints.Videos.Validation;
 
@@ -13,6 +14,12 @@ public sealed class MarkVideosReferenceRequestValidator : AbstractValidator<Mark
 
     public MarkVideosReferenceRequestValidator()
     {
+        RuleFor(request => request.ReferenceStatus)
+            .NotNull().WithMessage("referenceStatus is required.")
+            .Must(status => status is VideoReferenceStatus.UNUSED or VideoReferenceStatus.SKIPPED)
+            .WithMessage("referenceStatus must be UNUSED or SKIPPED.")
+            .OverridePropertyName("referenceStatus");
+
         RuleFor(request => request.VideoIds)
             .NotNull()
             .WithMessage("videoIds is required.")

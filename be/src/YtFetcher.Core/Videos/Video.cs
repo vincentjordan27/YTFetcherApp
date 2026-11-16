@@ -58,11 +58,17 @@ public sealed class Video : AuditableEntity
     [Column("current_likes")]
     public long CurrentLikes { get; set; }
 
-    [Column("is_reference")]
-    public bool IsReference { get; set; }
+    [Required]
+    [MaxLength(20)]
+    [Column("reference_status")]
+    public string ReferenceStatusValue { get; private set; } = nameof(VideoReferenceStatus.NONE);
 
-    [Column("is_reference_used")]
-    public bool IsReferenceUsed { get; set; }
+    [NotMapped]
+    public VideoReferenceStatus ReferenceStatus
+    {
+        get => Enum.Parse<VideoReferenceStatus>(ReferenceStatusValue, ignoreCase: false);
+        set => ReferenceStatusValue = value.ToString();
+    }
 
     [Column("reference_set_by_user_id", TypeName = "uuid")]
     public Guid? ReferenceSetByUserId { get; set; }
@@ -147,7 +153,7 @@ public sealed class Video : AuditableEntity
             DurationMillis = durationMillis,
             CurrentViews = viewCount,
             CurrentLikes = likeCount,
-            IsReference = false,
+            ReferenceStatus = VideoReferenceStatus.NONE,
             IsDeleted = false,
             // Backfill ingestion always creates a retrievable video: availability is about the provider
             // dropping an item later, never about how it was first discovered.
@@ -163,29 +169,57 @@ public sealed class Video : AuditableEntity
     public static bool IsShortForm(long durationMillis) => durationMillis <= MaxShortFormDurationMillis;
 
     /// <summary>
-    /// Applies the one-way reference transition: marks the video as reference, stops statistics
-    /// tracking, and records the reference metadata. Title, channel, current views/likes, published
-    /// timestamp, and the last stats fetch time are deliberately left unchanged.
+    /// Classifies an Active video as an unused reference or skipped video. An Active video cannot be
+    /// classified directly as used.
     /// </summary>
-    public void MarkAsReference(DateTimeOffset utcNow, Guid actorUserId, bool isUsed = true)
+    public bool ClassifyForReference(VideoReferenceStatus status, DateTimeOffset utcNow, Guid actorUserId)
     {
-        IsReference = true;
-        IsReferenceUsed = isUsed;
+        if (ReferenceStatus != VideoReferenceStatus.NONE ||
+            TrackingStatus != VideoTrackingStatus.ACTIVE ||
+            status is not (VideoReferenceStatus.UNUSED or VideoReferenceStatus.SKIPPED))
+        {
+            return false;
+        }
+
+        ReferenceStatus = status;
         ReferenceSetAt = utcNow;
         ReferenceSetByUserId = actorUserId;
         TrackingStatus = VideoTrackingStatus.STOPPED;
         ModifiedAt = utcNow;
         ModifiedByUserId = actorUserId;
+        return true;
+    }
+
+    /// <summary>Changes status within the approved Reference transition graph.</summary>
+    public bool ChangeReferenceStatus(VideoReferenceStatus status, DateTimeOffset utcNow, Guid actorUserId)
+    {
+        var isAllowed = (ReferenceStatus, status) switch
+        {
+            (VideoReferenceStatus.UNUSED, VideoReferenceStatus.USED or VideoReferenceStatus.SKIPPED) => true,
+            (VideoReferenceStatus.USED, VideoReferenceStatus.UNUSED or VideoReferenceStatus.SKIPPED) => true,
+            (VideoReferenceStatus.SKIPPED, VideoReferenceStatus.UNUSED) => true,
+            _ => false
+        };
+
+        if (!isAllowed)
+        {
+            return false;
+        }
+
+        ReferenceStatus = status;
+        ModifiedAt = utcNow;
+        ModifiedByUserId = actorUserId;
+        return true;
     }
 
     /// <summary>
-    /// Removes the reference flag and re-decides tracking from the same mature-stop rule the ingestion and
+    /// Returns a Reference video to Active and re-decides tracking from the same mature-stop rule the ingestion and
     /// statistics paths use: a video that is already mature and very popular stays
     /// <see cref="VideoTrackingStatus.STOPPED"/>, everything else returns to
     /// <see cref="VideoTrackingStatus.ACTIVE"/> and becomes due on the next ordinary daily run.
     /// </summary>
     /// <remarks>
-    /// The reference metadata is cleared together with the flag, keeping the invariant that a non-reference
+    /// The reference metadata is cleared together with the status, keeping the invariant that an Active
     /// row never carries a reference timestamp; the backfill ingestion path creates non-reference rows the
     /// same way. Current views/likes, publication time, availability, the last statistics fetch and every
     /// snapshot row are deliberately untouched. Returns <c>false</c> without mutating state when the video
@@ -193,32 +227,18 @@ public sealed class Video : AuditableEntity
     /// </remarks>
     public bool RemoveReference(DateTimeOffset utcNow, Guid actorUserId)
     {
-        if (!IsReference)
+        if (ReferenceStatus == VideoReferenceStatus.NONE)
         {
             return false;
         }
 
-        IsReference = false;
-        IsReferenceUsed = false;
+        ReferenceStatus = VideoReferenceStatus.NONE;
         ReferenceSetAt = null;
         ReferenceSetByUserId = null;
 
         var isMatureAndPopular = PublishedAt <= utcNow.AddDays(-MatureAgeDays) && CurrentViews >= MatureViewCount;
         TrackingStatus = isMatureAndPopular ? VideoTrackingStatus.STOPPED : VideoTrackingStatus.ACTIVE;
 
-        ModifiedAt = utcNow;
-        ModifiedByUserId = actorUserId;
-        return true;
-    }
-
-    public bool SetReferenceUsed(bool isUsed, DateTimeOffset utcNow, Guid actorUserId)
-    {
-        if (!IsReference)
-        {
-            return false;
-        }
-
-        IsReferenceUsed = isUsed;
         ModifiedAt = utcNow;
         ModifiedByUserId = actorUserId;
         return true;

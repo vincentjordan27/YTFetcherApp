@@ -361,6 +361,11 @@
     background: #f4f4f4;
     color: #606060;
   }
+
+  &--skipped {
+    background: #fff3e0;
+    color: #8a4b08;
+  }
 }
 
 .pagination-bar {

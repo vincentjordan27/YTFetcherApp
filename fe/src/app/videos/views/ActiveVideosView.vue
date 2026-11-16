@@ -19,7 +19,6 @@ const {
   currentPage,
   rowsPerPage,
   sort,
-  sortLabel,
   rows,
   pagination,
   tableState,
@@ -29,7 +28,6 @@ const {
   markReferenceOpen,
   markReferencePending,
   markReferenceError,
-  markReferenceIsUsed,
   updateSearchInput,
   goToPage,
   updateRowsPerPage,
@@ -38,8 +36,8 @@ const {
   toggleRowSelection,
   toggleVisibleSelection,
   openMarkReference,
-  openSingleMarkReference,
   openSingleMarkUnused,
+  openSingleSkip,
   closeMarkReference,
   confirmMarkReference,
 } = useActiveVideos()
@@ -81,7 +79,6 @@ function openPreview(row: ActiveVideoRow): void {
       :state="tableState.state"
       :state-message="tableState.message"
       :sort="sort"
-      :sort-label="sortLabel"
       :selected-ids="selectedIdList"
       :selected-count="selectedCount"
       :can-mark-reference="canMarkReference"
@@ -93,8 +90,8 @@ function openPreview(row: ActiveVideoRow): void {
       @toggle-selection="toggleRowSelection"
       @toggle-visible-selection="toggleVisibleSelection"
       @open-mark-reference="openMarkReference"
-      @open-mark-single-reference="openSingleMarkReference($event.id)"
       @open-mark-single-unused="openSingleMarkUnused($event.id)"
+      @open-skip-single-video="openSingleSkip($event.id)"
       @open-history="openHistory"
       @open-preview="openPreview"
     />
@@ -103,7 +100,6 @@ function openPreview(row: ActiveVideoRow): void {
       :selected-count="selectedCount"
       :pending="markReferencePending"
       :error="markReferenceError"
-      :is-used="markReferenceIsUsed"
       @close="closeMarkReference"
       @confirm="confirmMarkReference"
     />

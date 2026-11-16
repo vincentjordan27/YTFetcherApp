@@ -1,3 +1,5 @@
+using YtFetcher.Core.Videos;
+
 namespace YtFetcher.Application.Videos.DTO.Request;
 
 /// <summary>
@@ -9,4 +11,5 @@ public sealed record ReferenceVideosRequest(
     int PageSize,
     string? SearchText,
     string? SortBy,
-    string? SortDirection);
+    string? SortDirection,
+    VideoReferenceStatus? ReferenceStatus = null);

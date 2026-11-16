@@ -1,12 +1,13 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { getReferenceVideos, setReferenceVideoUsed, unmarkVideoReference } from '@/app/videos/api/videos-api'
+import { getReferenceVideos, setReferenceVideoStatus, unmarkVideoReference } from '@/app/videos/api/videos-api'
 import { toReferenceVideoRow } from '@/app/videos/data/reference-video.mapper'
-import { nextVideoSort, toVideoSortLabel } from '@/app/videos/data/video-sort.mapper'
+import { nextVideoSort } from '@/app/videos/data/video-sort.mapper'
 import type { ReferenceVideoPagination, ReferenceVideoRow } from '@/app/videos/types/reference-video.types'
 import type { VideoSort, VideoSortField } from '@/app/videos/types/video-sort.types'
 import { ApiError } from '@/common/api/api-client'
 import { useToast } from '@/common/composables/useToast'
 import { getInitialTablePageSize } from '@/common/data/initial-table-page-size'
+import type { ReferenceStatusFilter, VideoReferenceStatus } from '@/app/videos/types/video-reference-status'
 
 const INITIAL_PAGE = 1
 const SEARCH_DEBOUNCE_MS = 300
@@ -18,9 +19,12 @@ const LIST_FAILURE_MESSAGE = "Couldn't load videos."
 
 const REMOVE_SUCCESS_MESSAGE = 'Returned to active tracking.'
 const REMOVE_FAILURE_MESSAGE = "Couldn't return the video to active tracking. Check your connection and try again."
-const MARK_USED_SUCCESS_MESSAGE = 'Marked as used.'
-const MARK_UNUSED_SUCCESS_MESSAGE = 'Marked as unused.'
-const UPDATE_USAGE_FAILURE_MESSAGE = "Couldn't update the usage flag. Check your connection and try again."
+const STATUS_SUCCESS_MESSAGES = {
+  UNUSED: 'Marked as unused.',
+  USED: 'Marked as used.',
+  SKIPPED: 'Video skipped.',
+} as const
+const UPDATE_STATUS_FAILURE_MESSAGE = "Couldn't update the reference status. Check your connection and try again."
 
 const DEFAULT_REFERENCE_VIDEO_SORT: VideoSort = { field: 'referenceSetAt', direction: 'desc' }
 
@@ -34,13 +38,14 @@ export function useReferenceVideos() {
   const searchText = ref('')
   const rowsPerPage = ref(getInitialTablePageSize())
   const currentPage = ref(INITIAL_PAGE)
+  const statusFilter = ref<ReferenceStatusFilter>('ALL')
   const sort = ref<VideoSort>({ ...DEFAULT_REFERENCE_VIDEO_SORT })
   const rows = ref<ReferenceVideoRow[]>([])
   const totalCount = ref(0)
   const loading = ref(false)
   const requestFailed = ref(false)
   const removePending = ref(false)
-  const usagePending = ref(false)
+  const statusPending = ref(false)
   const { showToast } = useToast()
 
   let requestId = 0
@@ -56,9 +61,6 @@ export function useReferenceVideos() {
     if (rows.value.length === 0) return { state: 'empty' as const, message: LIST_EMPTY_MESSAGE }
     return { state: 'ready' as const, message: '' }
   })
-
-  /** Informational toolbar text; the header buttons are the only sort control. */
-  const sortLabel = computed(() => toVideoSortLabel(sort.value))
 
   onMounted(() => {
     void load()
@@ -84,6 +86,7 @@ export function useReferenceVideos() {
         query: searchText.value || undefined,
         sortBy: sort.value.field,
         sortDirection: sort.value.direction,
+        referenceStatus: statusFilter.value === 'ALL' ? undefined : statusFilter.value,
       })
 
       if (currentRequest !== requestId) return
@@ -146,6 +149,13 @@ export function useReferenceVideos() {
     void load()
   }
 
+  function setStatusFilter(status: ReferenceStatusFilter): void {
+    if (statusFilter.value === status) return
+    statusFilter.value = status
+    currentPage.value = INITIAL_PAGE
+    void load()
+  }
+
   /**
    * One header activation: a new column starts ascending, the active column flips. The server owns the
    * order, so paging restarts at one and the list is refetched.
@@ -178,23 +188,25 @@ export function useReferenceVideos() {
     showToast({ tone: 'success', message: REMOVE_SUCCESS_MESSAGE })
   }
 
-  async function toggleReferenceUsage(row: ReferenceVideoRow): Promise<void> {
-    if (usagePending.value) return
+  async function updateReferenceStatus(
+    row: ReferenceVideoRow,
+    status: Exclude<VideoReferenceStatus, 'NONE'>,
+  ): Promise<void> {
+    if (statusPending.value) return
 
-    const nextIsUsed = !row.isReferenceUsed
-    usagePending.value = true
+    statusPending.value = true
 
     try {
-      await setReferenceVideoUsed(row.id, nextIsUsed)
+      await setReferenceVideoStatus(row.id, status)
     } catch (caught) {
-      usagePending.value = false
-      showToast({ tone: 'failure', message: readableUsageFailure(caught) })
+      statusPending.value = false
+      showToast({ tone: 'failure', message: readableStatusFailure(caught) })
       return
     }
 
     await load()
-    usagePending.value = false
-    showToast({ tone: 'success', message: nextIsUsed ? MARK_USED_SUCCESS_MESSAGE : MARK_UNUSED_SUCCESS_MESSAGE })
+    statusPending.value = false
+    showToast({ tone: 'success', message: STATUS_SUCCESS_MESSAGES[status] })
   }
 
   return {
@@ -202,24 +214,25 @@ export function useReferenceVideos() {
     currentPage,
     rowsPerPage,
     sort,
-    sortLabel,
+    statusFilter,
     rows,
     totalCount,
     pagination,
     tableState,
     removePending,
-    usagePending,
+    statusPending,
     updateSearchInput,
     goToPage,
     updateRowsPerPage,
     setSort,
     retry,
+    setStatusFilter,
     removeReference,
-    toggleReferenceUsage,
+    updateReferenceStatus,
   }
 }
 
-function readableUsageFailure(error: unknown): string {
+function readableStatusFailure(error: unknown): string {
   if (error instanceof ApiError && (error.status === 400 || error.status === 404 || error.status === 409)) {
     const body = error.body
     if (typeof body === 'object' && body !== null && 'detail' in body) {
@@ -230,7 +243,7 @@ function readableUsageFailure(error: unknown): string {
     }
   }
 
-  return UPDATE_USAGE_FAILURE_MESSAGE
+  return UPDATE_STATUS_FAILURE_MESSAGE
 }
 
 /**

@@ -73,9 +73,9 @@ public static class VideoEndpoints
                     title: "Reference video not found");
         });
 
-        videos.MapPost("/reference/set-used", async (
-            [FromBody] SetVideoReferenceUsedRequest request,
-            IValidator<SetVideoReferenceUsedRequest> validator,
+        videos.MapPost("/reference/set-status", async (
+            [FromBody] SetVideoReferenceStatusRequest request,
+            IValidator<SetVideoReferenceStatusRequest> validator,
             IVideoUseCase videoUseCase,
             CancellationToken cancellationToken) =>
         {
@@ -85,7 +85,7 @@ public static class VideoEndpoints
                 return Results.ValidationProblem(validation.ToDictionary());
             }
 
-            var updated = await videoUseCase.SetReferenceUsedAsync(request, cancellationToken);
+            var updated = await videoUseCase.SetReferenceStatusAsync(request, cancellationToken);
             return updated
                 ? Results.NoContent()
                 : Results.Problem(

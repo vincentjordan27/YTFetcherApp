@@ -34,13 +34,14 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
         int page,
         int pageSize,
         string? searchText,
+        VideoReferenceStatus? referenceStatus,
         VideoListSortBy sortBy,
         VideoListSortDirection sortDirection,
         CancellationToken cancellationToken) =>
-        GetPageAsync(ReferenceVideos(searchText), page, pageSize, sortBy, sortDirection, cancellationToken);
+        GetPageAsync(ReferenceVideos(searchText, referenceStatus), page, pageSize, sortBy, sortDirection, cancellationToken);
 
-    public Task<int> CountReferenceAsync(string? searchText, CancellationToken cancellationToken) =>
-        ReferenceVideos(searchText).CountAsync(cancellationToken);
+    public Task<int> CountReferenceAsync(string? searchText, VideoReferenceStatus? referenceStatus, CancellationToken cancellationToken) =>
+        ReferenceVideos(searchText, referenceStatus).CountAsync(cancellationToken);
 
     public async Task<(bool Exists, int TotalCount, IReadOnlyList<VideoSnapshot> Snapshots)> GetSnapshotHistoryPageAsync(
         Guid videoId,
@@ -77,7 +78,7 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
 
     public async Task<bool> TryMarkAsReferenceAsync(
         IReadOnlyList<Guid> videoIds,
-        bool isUsed,
+        VideoReferenceStatus referenceStatus,
         Guid actorUserId,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken)
@@ -93,7 +94,7 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
             var allEligible = videos.Count == videoIds.Count &&
                 videos.All(video =>
                     !video.IsDeleted &&
-                    !video.IsReference &&
+                    video.ReferenceStatus == VideoReferenceStatus.NONE &&
                     video.TrackingStatus == VideoTrackingStatus.ACTIVE);
 
             if (!allEligible)
@@ -104,7 +105,12 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
 
             foreach (var video in videos)
             {
-                video.MarkAsReference(utcNow, actorUserId, isUsed);
+                if (!video.ClassifyForReference(referenceStatus, utcNow, actorUserId))
+                {
+                    await transaction.RollbackAsync(CancellationToken.None);
+                    dbContext.ChangeTracker.Clear();
+                    return false;
+                }
             }
 
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -153,9 +159,9 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
         }
     }
 
-    public async Task<bool> TrySetReferenceUsedAsync(
+    public async Task<bool> TrySetReferenceStatusAsync(
         Guid videoId,
-        bool isUsed,
+        VideoReferenceStatus referenceStatus,
         Guid actorUserId,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken)
@@ -167,7 +173,7 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
             var locked = await LockVideosAsync([videoId], cancellationToken);
             var video = locked.Count == 1 ? locked[0] : null;
 
-            if (video is null || video.IsDeleted || !video.SetReferenceUsed(isUsed, utcNow, actorUserId))
+            if (video is null || video.IsDeleted || !video.ChangeReferenceStatus(referenceStatus, utcNow, actorUserId))
             {
                 await transaction.RollbackAsync(CancellationToken.None);
                 dbContext.ChangeTracker.Clear();
@@ -251,7 +257,7 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
             VideoListSortBy.Title => Order(videos, video => video.Title.ToLower(), descending),
             VideoListSortBy.Likes => Order(videos, video => video.CurrentLikes, descending),
             VideoListSortBy.PublishedAt => Order(videos, video => video.PublishedAt, descending),
-            VideoListSortBy.ReferenceUsed => Order(videos, video => video.IsReferenceUsed, descending),
+            VideoListSortBy.ReferenceStatus => Order(videos, video => video.ReferenceStatusValue, descending),
             _ => Order(videos, video => video.CurrentViews, descending)
         };
 
@@ -276,11 +282,14 @@ public sealed class VideoRepository(YtFetcherDbContext dbContext) : IVideoReposi
 
     private IQueryable<Video> ActiveVideos(string? searchText) =>
         VisibleVideos(searchText).Where(video =>
-            !video.IsReference &&
+            video.ReferenceStatusValue == nameof(VideoReferenceStatus.NONE) &&
             video.TrackingStatusValue == nameof(VideoTrackingStatus.ACTIVE));
 
-    private IQueryable<Video> ReferenceVideos(string? searchText) =>
-        VisibleVideos(searchText).Where(video => video.IsReference);
+    private IQueryable<Video> ReferenceVideos(string? searchText, VideoReferenceStatus? referenceStatus)
+    {
+        var query = VisibleVideos(searchText).Where(video => video.ReferenceStatusValue != nameof(VideoReferenceStatus.NONE));
+        return referenceStatus is null ? query : query.Where(video => video.ReferenceStatusValue == referenceStatus.Value.ToString());
+    }
 
     private IQueryable<Video> VisibleVideos(string? searchText)
     {

@@ -46,12 +46,13 @@ public interface IVideoRepository
         int page,
         int pageSize,
         string? searchText,
+        VideoReferenceStatus? referenceStatus,
         VideoListSortBy sortBy,
         VideoListSortDirection sortDirection,
         CancellationToken cancellationToken);
 
     /// <summary>Counts the reference videos that match the optional search text.</summary>
-    Task<int> CountReferenceAsync(string? searchText, CancellationToken cancellationToken);
+    Task<int> CountReferenceAsync(string? searchText, VideoReferenceStatus? referenceStatus, CancellationToken cancellationToken);
 
     /// <summary>
     /// In one short transaction, locks every requested video row, verifies each id is a non-deleted,
@@ -61,7 +62,7 @@ public interface IVideoRepository
     /// </summary>
     Task<bool> TryMarkAsReferenceAsync(
         IReadOnlyList<Guid> videoIds,
-        bool isUsed,
+        VideoReferenceStatus referenceStatus,
         Guid actorUserId,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken);
@@ -81,9 +82,9 @@ public interface IVideoRepository
     /// Sets the current Used/Unused flag of one live Reference row in a short locked transaction. Returns
     /// <c>false</c> when the row is missing, soft-deleted, or is no longer Reference.
     /// </summary>
-    Task<bool> TrySetReferenceUsedAsync(
+    Task<bool> TrySetReferenceStatusAsync(
         Guid videoId,
-        bool isUsed,
+        VideoReferenceStatus referenceStatus,
         Guid actorUserId,
         DateTimeOffset utcNow,
         CancellationToken cancellationToken);

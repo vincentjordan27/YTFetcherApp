@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using YtFetcher.Core.Videos;
 using YtFetcher.Infrastructure.Persistence;
 
 namespace YtFetcher.Api.Tests.Videos;
@@ -88,7 +89,7 @@ public class VideoListSortTranslationTests
     private static IQueryable<YtFetcher.Core.Videos.Video> VisibleVideos(YtFetcherDbContext context) =>
         context.Videos
             .AsNoTracking()
-            .Where(video => !video.IsDeleted && !video.IsReference);
+            .Where(video => !video.IsDeleted && video.ReferenceStatusValue == nameof(VideoReferenceStatus.NONE));
 
     private static IQueryable<YtFetcher.Core.Channels.Channel> VisibleChannels(YtFetcherDbContext context) =>
         context.Channels.AsNoTracking().Where(channel => !channel.IsDeleted);

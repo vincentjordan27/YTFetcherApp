@@ -9,6 +9,19 @@ namespace YtFetcher.Api.Tests.Postgres;
 public class PostgresProofDatabaseSchemaScriptsTests
 {
     [Fact]
+    public void Baseline_schema_persists_reference_status_and_removes_legacy_reference_flags()
+    {
+        var baseline = File.ReadAllText(PostgresProofDatabase.SchemaScriptPaths()[0]);
+
+        Assert.Contains("reference_status VARCHAR(20) NOT NULL DEFAULT 'NONE'", baseline, StringComparison.Ordinal);
+        Assert.Contains("CHECK (reference_status IN ('NONE', 'UNUSED', 'USED', 'SKIPPED'))", baseline, StringComparison.Ordinal);
+        Assert.DoesNotContain("is_reference BOOLEAN", baseline, StringComparison.Ordinal);
+        Assert.DoesNotContain("is_reference_used BOOLEAN", baseline, StringComparison.Ordinal);
+        Assert.Contains("reference_status = 'NONE'", baseline, StringComparison.Ordinal);
+        Assert.DoesNotContain("CREATE INDEX ix_videos_reference_recent", baseline, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Schema_script_paths_start_with_the_baseline_and_include_every_migration_script()
     {
         var scripts = PostgresProofDatabase.SchemaScriptPaths();

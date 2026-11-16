@@ -37,7 +37,7 @@ export function toReferenceVideoRow(item: ReferenceVideoItem): ReferenceVideoRow
     ageLabel: formatAge(item.publishedAt),
     lastStatsFetchedLabel: formatDateTime(item.lastStatsFetchedAt),
     referenceSetLabel: formatDateTime(item.referenceSetAt),
-    isReferenceUsed: item.isReferenceUsed,
+    referenceStatus: item.referenceStatus,
   }
 }
 

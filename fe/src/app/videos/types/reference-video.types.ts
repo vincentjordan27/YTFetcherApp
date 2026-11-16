@@ -1,3 +1,5 @@
+import type { VideoReferenceStatus } from '@/app/videos/types/video-reference-status'
+
 /** Presentation state of the reference-video table while data is requested from the API. */
 export type ReferenceVideoTableState = 'ready' | 'loading' | 'empty' | 'error'
 
@@ -20,7 +22,7 @@ export interface ReferenceVideoRow {
   readonly ageLabel: string
   readonly lastStatsFetchedLabel: string
   readonly referenceSetLabel: string
-  readonly isReferenceUsed: boolean
+  readonly referenceStatus: Exclude<VideoReferenceStatus, 'NONE'>
 }
 
 export interface ReferenceVideoPagination {

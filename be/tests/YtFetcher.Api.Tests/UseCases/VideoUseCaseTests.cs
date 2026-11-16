@@ -194,7 +194,7 @@ public class VideoUseCaseTests
         var ids = new[] { Guid.NewGuid(), Guid.NewGuid() };
 
         var marked = await useCase.MarkAsReferenceAsync(
-            new MarkVideosReferenceRequest(ids),
+            new MarkVideosReferenceRequest(ids, VideoReferenceStatus.UNUSED),
             CancellationToken.None);
 
         Assert.True(marked);
@@ -210,7 +210,7 @@ public class VideoUseCaseTests
         var useCase = CreateUseCase(repository);
 
         var marked = await useCase.MarkAsReferenceAsync(
-            new MarkVideosReferenceRequest([Guid.NewGuid()]),
+            new MarkVideosReferenceRequest([Guid.NewGuid()], VideoReferenceStatus.UNUSED),
             CancellationToken.None);
 
         Assert.False(marked);
@@ -249,19 +249,19 @@ public class VideoUseCaseTests
     [Fact]
     public async Task Set_reference_used_forwards_the_new_value_actor_and_clock()
     {
-        var repository = new FakeVideoRepository { SetReferenceUsedResult = true };
+        var repository = new FakeVideoRepository { SetReferenceStatusResult = true };
         var useCase = CreateUseCase(repository);
         var videoId = Guid.NewGuid();
 
-        var updated = await useCase.SetReferenceUsedAsync(
-            new SetVideoReferenceUsedRequest(videoId, true),
+        var updated = await useCase.SetReferenceStatusAsync(
+            new SetVideoReferenceStatusRequest(videoId, VideoReferenceStatus.USED),
             CancellationToken.None);
 
         Assert.True(updated);
-        Assert.Equal(videoId, repository.ReceivedSetReferenceUsedVideoId);
-        Assert.Equal(true, repository.ReceivedSetReferenceUsedValue);
-        Assert.Equal(ActorUserId, repository.ReceivedSetReferenceUsedActorUserId);
-        Assert.Equal(Now, repository.ReceivedSetReferenceUsedUtcNow);
+        Assert.Equal(videoId, repository.ReceivedSetReferenceStatusVideoId);
+        Assert.Equal(VideoReferenceStatus.USED, repository.ReceivedSetReferenceStatus);
+        Assert.Equal(ActorUserId, repository.ReceivedSetReferenceStatusActorUserId);
+        Assert.Equal(Now, repository.ReceivedSetReferenceStatusUtcNow);
     }
 
     [Fact]
@@ -372,7 +372,7 @@ public class VideoUseCaseTests
 
         public bool RemoveResult { get; init; }
 
-        public bool SetReferenceUsedResult { get; init; }
+        public bool SetReferenceStatusResult { get; init; }
 
         public int? ReceivedPage { get; private set; }
 
@@ -406,13 +406,13 @@ public class VideoUseCaseTests
 
         public Guid? ReceivedRemoveActorUserId { get; private set; }
 
-        public Guid? ReceivedSetReferenceUsedVideoId { get; private set; }
+        public Guid? ReceivedSetReferenceStatusVideoId { get; private set; }
 
-        public bool? ReceivedSetReferenceUsedValue { get; private set; }
+        public VideoReferenceStatus? ReceivedSetReferenceStatus { get; private set; }
 
-        public DateTimeOffset? ReceivedSetReferenceUsedUtcNow { get; private set; }
+        public DateTimeOffset? ReceivedSetReferenceStatusUtcNow { get; private set; }
 
-        public Guid? ReceivedSetReferenceUsedActorUserId { get; private set; }
+        public Guid? ReceivedSetReferenceStatusActorUserId { get; private set; }
 
         public (bool Exists, int TotalCount, IReadOnlyList<VideoSnapshot> Snapshots) HistoryResult { get; set; } =
             (false, 0, []);
@@ -450,6 +450,7 @@ public class VideoUseCaseTests
             int page,
             int pageSize,
             string? searchText,
+            VideoReferenceStatus? referenceStatus,
             VideoListSortBy sortBy,
             VideoListSortDirection sortDirection,
             CancellationToken cancellationToken)
@@ -463,7 +464,7 @@ public class VideoUseCaseTests
             return Task.FromResult(Project(Videos));
         }
 
-        public Task<int> CountReferenceAsync(string? searchText, CancellationToken cancellationToken)
+        public Task<int> CountReferenceAsync(string? searchText, VideoReferenceStatus? referenceStatus, CancellationToken cancellationToken)
         {
             ReceivedReferenceSearchText = searchText;
             return Task.FromResult(TotalCount);
@@ -471,7 +472,7 @@ public class VideoUseCaseTests
 
         public Task<bool> TryMarkAsReferenceAsync(
             IReadOnlyList<Guid> videoIds,
-            bool isUsed,
+            VideoReferenceStatus referenceStatus,
             Guid actorUserId,
             DateTimeOffset utcNow,
             CancellationToken cancellationToken)
@@ -496,19 +497,19 @@ public class VideoUseCaseTests
             return Task.FromResult(RemoveResult);
         }
 
-        public Task<bool> TrySetReferenceUsedAsync(
+        public Task<bool> TrySetReferenceStatusAsync(
             Guid videoId,
-            bool isUsed,
+            VideoReferenceStatus referenceStatus,
             Guid actorUserId,
             DateTimeOffset utcNow,
             CancellationToken cancellationToken)
         {
-            ReceivedSetReferenceUsedVideoId = videoId;
-            ReceivedSetReferenceUsedValue = isUsed;
-            ReceivedSetReferenceUsedActorUserId = actorUserId;
-            ReceivedSetReferenceUsedUtcNow = utcNow;
+            ReceivedSetReferenceStatusVideoId = videoId;
+            ReceivedSetReferenceStatus = referenceStatus;
+            ReceivedSetReferenceStatusActorUserId = actorUserId;
+            ReceivedSetReferenceStatusUtcNow = utcNow;
 
-            return Task.FromResult(SetReferenceUsedResult);
+            return Task.FromResult(SetReferenceStatusResult);
         }
 
         public Task<(bool Exists, int TotalCount, IReadOnlyList<VideoSnapshot> Snapshots)> GetSnapshotHistoryPageAsync(

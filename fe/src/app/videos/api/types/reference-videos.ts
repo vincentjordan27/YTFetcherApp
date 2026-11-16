@@ -1,7 +1,9 @@
 /** Wire contracts for the reference-video list action `POST /api/videos/reference/list`. */
 
+import type { VideoReferenceStatus } from '@/app/videos/types/video-reference-status'
+
 /** Sort columns the reference list accepts; mirrors the server contract exactly. */
-export type ReferenceVideosSortBy = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt' | 'referenceSetAt' | 'referenceUsed'
+export type ReferenceVideosSortBy = 'title' | 'views' | 'likes' | 'publishedAt' | 'lastUpdatedAt' | 'referenceSetAt' | 'referenceStatus'
 
 export type ReferenceVideosSortDirection = 'asc' | 'desc'
 
@@ -12,6 +14,7 @@ export interface ReferenceVideosRequest {
   readonly query?: string
   readonly sortBy: ReferenceVideosSortBy
   readonly sortDirection: ReferenceVideosSortDirection
+  readonly referenceStatus?: Exclude<VideoReferenceStatus, 'NONE'>
 }
 
 /** JSON body of the paged list action. */
@@ -21,6 +24,7 @@ export interface ReferenceVideosListBody {
   readonly searchText: string | null
   readonly sortBy: ReferenceVideosSortBy
   readonly sortDirection: ReferenceVideosSortDirection
+  readonly referenceStatus: Exclude<VideoReferenceStatus, 'NONE'> | null
 }
 
 export interface ReferenceVideosResponse {
@@ -45,6 +49,6 @@ export interface ReferenceVideoItem {
   readonly publishedAt: string
   /** ISO 8601 timestamp with an offset, or null. */
   readonly lastStatsFetchedAt: string | null
-  readonly isReferenceUsed: boolean
+  readonly referenceStatus: Exclude<VideoReferenceStatus, 'NONE'>
   readonly referenceSetAt: string | null
 }

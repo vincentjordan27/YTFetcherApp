@@ -45,7 +45,7 @@ public interface IVideoUseCase
         CancellationToken cancellationToken);
 
     /// <summary>Sets the current Used/Unused flag without changing Reference membership.</summary>
-    Task<bool> SetReferenceUsedAsync(
-        SetVideoReferenceUsedRequest request,
+    Task<bool> SetReferenceStatusAsync(
+        SetVideoReferenceStatusRequest request,
         CancellationToken cancellationToken);
 }

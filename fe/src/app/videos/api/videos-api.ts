@@ -5,9 +5,10 @@ import type {
   ActiveVideosRequest,
   ActiveVideosResponse,
 } from '@/app/videos/api/types/active-videos'
-import type { MarkVideosReferenceBody } from '@/app/videos/api/types/mark-videos-reference'
+import type { ClassifyActiveVideosBody } from '@/app/videos/api/types/classify-active-videos'
 import type { UnmarkVideoReferenceBody } from '@/app/videos/api/types/unmark-video-reference'
-import type { SetVideoReferenceUsedBody } from '@/app/videos/api/types/set-video-reference-used'
+import type { SetVideoReferenceStatusBody } from '@/app/videos/api/types/set-video-reference-status'
+import type { VideoReferenceStatus } from '@/app/videos/types/video-reference-status'
 import type {
   ReferenceVideosListBody,
   ReferenceVideosRequest,
@@ -41,6 +42,7 @@ export function getReferenceVideos(request: ReferenceVideosRequest): Promise<Ref
     searchText: request.query ?? null,
     sortBy: request.sortBy,
     sortDirection: request.sortDirection,
+    referenceStatus: request.referenceStatus ?? null,
   }
 
   return apiRequest<ReferenceVideosResponse>('/api/videos/reference/list', {
@@ -54,8 +56,11 @@ export function getActiveVideoCount(): Promise<ActiveVideoCountResponse> {
 }
 
 /** All-or-nothing: the server returns 204 or a readable 409 conflict. */
-export function markVideosReference(videoIds: readonly string[], isUsed = true): Promise<void> {
-  const body: MarkVideosReferenceBody = { videoIds, isUsed }
+export function classifyActiveVideos(
+  videoIds: readonly string[],
+  referenceStatus: Exclude<VideoReferenceStatus, 'NONE' | 'USED'>,
+): Promise<void> {
+  const body: ClassifyActiveVideosBody = { videoIds, referenceStatus }
 
   return apiRequest<void>('/api/videos/mark-reference', {
     method: 'POST',
@@ -73,11 +78,14 @@ export function unmarkVideoReference(videoId: string): Promise<void> {
   })
 }
 
-/** Sets the current Used/Unused flag without removing the video from Reference. */
-export function setReferenceVideoUsed(videoId: string, isUsed: boolean): Promise<void> {
-  const body: SetVideoReferenceUsedBody = { videoId, isUsed }
+/** Changes a Reference video's curation status without removing it from Reference. */
+export function setReferenceVideoStatus(
+  videoId: string,
+  referenceStatus: Exclude<VideoReferenceStatus, 'NONE'>,
+): Promise<void> {
+  const body: SetVideoReferenceStatusBody = { videoId, referenceStatus }
 
-  return apiRequest<void>('/api/videos/reference/set-used', {
+  return apiRequest<void>('/api/videos/reference/set-status', {
     method: 'POST',
     body: JSON.stringify(body),
   })

@@ -1,12 +1,13 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { getActiveVideos, markVideosReference } from '@/app/videos/api/videos-api'
+import { classifyActiveVideos, getActiveVideos } from '@/app/videos/api/videos-api'
 import { toActiveVideoRow } from '@/app/videos/data/active-video.mapper'
-import { nextVideoSort, toVideoSortLabel } from '@/app/videos/data/video-sort.mapper'
+import { nextVideoSort } from '@/app/videos/data/video-sort.mapper'
 import type { ActiveVideoPagination, ActiveVideoRow } from '@/app/videos/types/active-video.types'
 import { DEFAULT_VIDEO_SORT, type VideoSort, type VideoSortField } from '@/app/videos/types/video-sort.types'
 import { ApiError } from '@/common/api/api-client'
 import { useToast } from '@/common/composables/useToast'
 import { getInitialTablePageSize } from '@/common/data/initial-table-page-size'
+import type { VideoReferenceStatus } from '@/app/videos/types/video-reference-status'
 
 const INITIAL_PAGE = 1
 const SEARCH_DEBOUNCE_MS = 300
@@ -18,8 +19,10 @@ const LIST_FAILURE_MESSAGE = "Couldn't load videos."
 
 const MARK_CONFLICT_MESSAGE = 'One or more selected videos are no longer active. Refresh the list and try again.'
 const MARK_FAILURE_MESSAGE = "Couldn't mark the selected videos as reference. Check your connection and try again."
-const MARK_SUCCESS_MESSAGE = 'Videos marked as reference.'
-const MARK_UNUSED_SUCCESS_MESSAGE = 'Video marked as unused.'
+const CLASSIFY_SUCCESS_MESSAGES = {
+  UNUSED: 'Saved as unused reference.',
+  SKIPPED: 'Video skipped.',
+} as const
 
 /**
  * Server-paged state for the live Active tab: 300 ms debounced server search, one-based paging, a
@@ -40,7 +43,6 @@ export function useActiveVideos() {
   const markReferenceOpen = ref(false)
   const markReferencePending = ref(false)
   const markReferenceError = ref<string | null>(null)
-  const markReferenceIsUsed = ref(true)
   const { showToast } = useToast()
 
   let requestId = 0
@@ -62,7 +64,6 @@ export function useActiveVideos() {
   const canMarkReference = computed(() => selectedIds.value.size > 0 && !markReferencePending.value)
 
   /** Informational toolbar text; the header buttons are the only sort control. */
-  const sortLabel = computed(() => toVideoSortLabel(sort.value))
 
   onMounted(() => {
     void load()
@@ -199,41 +200,37 @@ export function useActiveVideos() {
   function openMarkReference(): void {
     if (!canMarkReference.value) return
     markReferenceError.value = null
-    markReferenceIsUsed.value = true
     markReferenceOpen.value = true
-  }
-
-  function openSingleMarkReference(videoId: string): void {
-    if (markReferencePending.value) return
-
-    selectedIds.value = new Set([videoId])
-    openMarkReference()
   }
 
   function openSingleMarkUnused(videoId: string): void {
     if (markReferencePending.value) return
 
     selectedIds.value = new Set([videoId])
-    markReferenceError.value = null
-    markReferenceIsUsed.value = false
-    markReferenceOpen.value = true
+    openMarkReference()
+  }
+
+  function openSingleSkip(videoId: string): void {
+    if (markReferencePending.value) return
+
+    selectedIds.value = new Set([videoId])
+    openMarkReference()
   }
 
   function closeMarkReference(): void {
     if (markReferencePending.value) return
     markReferenceOpen.value = false
     markReferenceError.value = null
-    markReferenceIsUsed.value = true
   }
 
-  async function confirmMarkReference(): Promise<void> {
+  async function confirmMarkReference(referenceStatus: Exclude<VideoReferenceStatus, 'NONE' | 'USED'>): Promise<void> {
     if (!canMarkReference.value) return
 
     markReferencePending.value = true
     markReferenceError.value = null
 
     try {
-      await markVideosReference(selectedIdList.value, markReferenceIsUsed.value)
+      await classifyActiveVideos(selectedIdList.value, referenceStatus)
     } catch (caught) {
       markReferencePending.value = false
 
@@ -253,7 +250,7 @@ export function useActiveVideos() {
     markReferenceOpen.value = false
     // Reload clears the selection through the normal list-result path.
     await load()
-    showToast({ tone: 'success', message: markReferenceIsUsed.value ? MARK_SUCCESS_MESSAGE : MARK_UNUSED_SUCCESS_MESSAGE })
+    showToast({ tone: 'success', message: CLASSIFY_SUCCESS_MESSAGES[referenceStatus] })
   }
 
   return {
@@ -261,7 +258,6 @@ export function useActiveVideos() {
     currentPage,
     rowsPerPage,
     sort,
-    sortLabel,
     rows,
     totalCount,
     pagination,
@@ -273,7 +269,6 @@ export function useActiveVideos() {
     markReferenceOpen,
     markReferencePending,
     markReferenceError,
-    markReferenceIsUsed,
     updateSearchInput,
     goToPage,
     updateRowsPerPage,
@@ -283,8 +278,8 @@ export function useActiveVideos() {
     toggleRowSelection,
     toggleVisibleSelection,
     openMarkReference,
-    openSingleMarkReference,
     openSingleMarkUnused,
+    openSingleSkip,
     closeMarkReference,
     confirmMarkReference,
   }

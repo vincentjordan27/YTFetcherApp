@@ -1,4 +1,4 @@
-import type { VideoSort, VideoSortDirection, VideoSortField } from '@/app/videos/types/video-sort.types'
+import type { VideoSort, VideoSortField } from '@/app/videos/types/video-sort.types'
 
 /** Column headings as they appear in the sortable table header. */
 const SORT_FIELD_LABELS: Readonly<Record<VideoSortField, string>> = {
@@ -8,28 +8,7 @@ const SORT_FIELD_LABELS: Readonly<Record<VideoSortField, string>> = {
   publishedAt: 'Published',
   lastUpdatedAt: 'Last update',
   referenceSetAt: 'Reference date',
-  referenceUsed: 'Usage',
-}
-
-/** Header-visible short label used by the informational toolbar value, e.g. `Published (Asc)`. */
-const SORT_SHORT_LABELS: Readonly<Record<VideoSortField, string>> = {
-  title: 'Title',
-  views: 'Views',
-  likes: 'Likes',
-  publishedAt: 'Published',
-  lastUpdatedAt: 'Last update',
-  referenceSetAt: 'Reference date',
-  referenceUsed: 'Usage',
-}
-
-const DIRECTION_LABELS: Readonly<Record<VideoSortDirection, string>> = {
-  asc: 'Asc',
-  desc: 'Desc',
-}
-
-/** The toolbar is informational: it reports the active sort, it is not a second control. */
-export function toVideoSortLabel(sort: VideoSort): string {
-  return `${SORT_SHORT_LABELS[sort.field]} (${DIRECTION_LABELS[sort.direction]})`
+  referenceStatus: 'Status',
 }
 
 /** The header's accessible name, so the button reads as the column it sorts. */
