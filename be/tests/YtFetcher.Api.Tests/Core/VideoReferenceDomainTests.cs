@@ -26,8 +26,6 @@ public class VideoReferenceDomainTests
     [Theory]
     [InlineData(VideoReferenceStatus.NONE)]
     [InlineData(VideoReferenceStatus.USED)]
-    [InlineData(VideoReferenceStatus.UNUSED)]
-    [InlineData(VideoReferenceStatus.SKIPPED)]
     public void Active_video_rejects_classifications_other_than_unused_or_skipped(VideoReferenceStatus status)
     {
         var video = CreateVideo(VideoReferenceStatus.NONE);
