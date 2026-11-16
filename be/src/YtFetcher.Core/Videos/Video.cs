@@ -119,7 +119,7 @@ public sealed class Video : AuditableEntity
     public bool IsStatisticsClaimed => StatsClaimToken is not null;
 
     /// <summary>
-    /// Creates a newly ingested video with the M5 initial tracking state: a mature, very popular
+    /// Creates a newly ingested video with its initial tracking state: a mature, very popular
     /// video starts stopped, everything else starts active and is eligible on the next Pacific daily window.
     /// </summary>
     public static Video CreateIngested(

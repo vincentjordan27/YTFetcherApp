@@ -102,7 +102,7 @@ public sealed class YouTubeDailyQuotaUsage : AuditableEntity
     public bool IsVideoBatchStatsQuotaExhausted => VideoBatchStatsQuotaExhaustedAt is not null;
 
     /// <summary>
-    /// True once Phase 0 has committed this date's configured first-page attempt limit. Before that, no
+    /// True once this date's configured first-page attempt limit is committed. Before that, no
     /// provider reservation is valid and approval must be refused rather than silently spending capacity.
     /// </summary>
     [NotMapped]

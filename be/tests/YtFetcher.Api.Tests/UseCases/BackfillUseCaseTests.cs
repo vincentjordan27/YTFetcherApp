@@ -63,13 +63,17 @@ public class BackfillUseCaseTests
             channel,
             page: UploadsPageResult.QuotaExceeded());
 
-        await useCase.RunPageAsync(channel.Id, BackfillTriggerSource.APPROVAL, CancellationToken.None);
+        var outcome = await useCase.RunPageAsync(
+            channel.Id,
+            BackfillTriggerSource.APPROVAL,
+            CancellationToken.None);
 
         Assert.Equal(0, quota.QueriesReservations);
         Assert.Equal(0, quota.BatchStatsReservations);
         Assert.Equal(1, quota.QueriesExhaustedMarks);
         Assert.Equal([QuotaLimitBucket.QUERIES], repository.DeferredForQuota.Select(entry => entry.Bucket));
         Assert.Equal(0, repository.FailureCount);
+        Assert.Equal(BackfillPageExecutionResult.QuotaStopped, outcome);
     }
 
     [Fact]
@@ -81,13 +85,51 @@ public class BackfillUseCaseTests
             page: UploadsPageResult.Succeeded([UploadItem("v1")], nextPageToken: null),
             stats: VideoStatsBatchResult.Succeeded([StatsItem("v1")]));
 
-        await useCase.RunPageAsync(channel.Id, BackfillTriggerSource.APPROVAL, CancellationToken.None);
+        var outcome = await useCase.RunPageAsync(
+            channel.Id,
+            BackfillTriggerSource.APPROVAL,
+            CancellationToken.None);
 
         Assert.Equal(0, quota.QueriesReservations);
         Assert.Equal(0, quota.BatchStatsReservations);
         Assert.Equal(1, gateway.PageCallCount);
         Assert.Equal(1, gateway.StatsCallCount);
         Assert.Equal(1, repository.PersistCount);
+        Assert.Equal(BackfillPageExecutionResult.Stopped, outcome);
+    }
+
+    [Fact]
+    public async Task A_successful_page_with_a_next_token_requests_another_round()
+    {
+        var channel = ClaimedChannel(pagesCompleted: 1, pageToken: "page-2");
+        var (useCase, _, _, _, _) = CreateUseCase(
+            channel,
+            page: UploadsPageResult.Succeeded([UploadItem("v1")], nextPageToken: "page-3"),
+            stats: VideoStatsBatchResult.Succeeded([StatsItem("v1")]));
+
+        var outcome = await useCase.RunPageAsync(
+            channel.Id,
+            BackfillTriggerSource.DAILY_PUMP,
+            CancellationToken.None);
+
+        Assert.Equal(BackfillPageExecutionResult.Continued, outcome);
+    }
+
+    [Fact]
+    public async Task A_page_at_the_configured_limit_stops_even_when_youtube_has_a_next_token()
+    {
+        var channel = ClaimedChannel(pagesCompleted: 2, pageToken: "page-3");
+        var (useCase, _, _, _, _) = CreateUseCase(
+            channel,
+            page: UploadsPageResult.Succeeded([UploadItem("v1")], nextPageToken: "page-4"),
+            stats: VideoStatsBatchResult.Succeeded([StatsItem("v1")]));
+
+        var outcome = await useCase.RunPageAsync(
+            channel.Id,
+            BackfillTriggerSource.DAILY_PUMP,
+            CancellationToken.None);
+
+        Assert.Equal(BackfillPageExecutionResult.Stopped, outcome);
     }
 
     [Fact]
@@ -99,11 +141,12 @@ public class BackfillUseCaseTests
             page: UploadsPageResult.Succeeded([UploadItem("v1")], nextPageToken: null),
             stats: VideoStatsBatchResult.Succeeded([StatsItem("v1")]));
 
-        await useCase.RunPageAsync(channel.Id, BackfillTriggerSource.DAILY_PUMP, CancellationToken.None);
+        var outcome = await useCase.RunPageAsync(channel.Id, BackfillTriggerSource.DAILY_PUMP, CancellationToken.None);
 
         Assert.Equal(1, quota.QueriesReservations);
         Assert.Equal(1, quota.BatchStatsReservations);
         Assert.Equal(1, repository.PersistCount);
+        Assert.Equal(BackfillPageExecutionResult.Stopped, outcome);
     }
 
     [Fact]
@@ -114,12 +157,16 @@ public class BackfillUseCaseTests
             channel,
             page: UploadsPageResult.Succeeded([], nextPageToken: null));
 
-        await useCase.RunPageAsync(channel.Id, BackfillTriggerSource.DAILY_PUMP, CancellationToken.None);
+        var outcome = await useCase.RunPageAsync(
+            channel.Id,
+            BackfillTriggerSource.DAILY_PUMP,
+            CancellationToken.None);
 
         Assert.Equal(1, quota.QueriesReservations);
         Assert.Equal(0, quota.BatchStatsReservations);
         Assert.Equal(0, gateway.StatsCallCount);
         Assert.Equal(1, repository.PersistCount);
+        Assert.Equal(BackfillPageExecutionResult.Stopped, outcome);
     }
 
     [Fact]
@@ -131,11 +178,15 @@ public class BackfillUseCaseTests
             page: UploadsPageResult.Succeeded([UploadItem("v1")], nextPageToken: null),
             queriesReservation: QuotaReservationResult.NoRemainingCapacity);
 
-        await useCase.RunPageAsync(channel.Id, BackfillTriggerSource.DAILY_PUMP, CancellationToken.None);
+        var outcome = await useCase.RunPageAsync(
+            channel.Id,
+            BackfillTriggerSource.DAILY_PUMP,
+            CancellationToken.None);
 
         Assert.Equal(0, gateway.PageCallCount);
         Assert.Equal(0, repository.PersistCount);
         Assert.Equal([QuotaLimitBucket.QUERIES], repository.DeferredForQuota.Select(entry => entry.Bucket));
+        Assert.Equal(BackfillPageExecutionResult.QuotaStopped, outcome);
     }
 
     [Fact]
@@ -349,7 +400,8 @@ public class BackfillUseCaseTests
         {
             PersistCount++;
             PersistedPage = page;
-            return Task.FromResult(new BackfillPagePersistResult(0, 0, BackfillStatus.PENDING, page.NextPageToken is not null));
+            var status = page.IsChannelComplete ? BackfillStatus.COMPLETED : BackfillStatus.PENDING;
+            return Task.FromResult(new BackfillPagePersistResult(0, 0, status, status == BackfillStatus.PENDING));
         }
 
         public Task<bool> DeferForQuotaLimitAsync(Guid channelId, Guid claimToken, QuotaLimitBucket bucket, DateTimeOffset utcNow, CancellationToken cancellationToken)
@@ -376,6 +428,9 @@ public class BackfillUseCaseTests
             throw new NotSupportedException();
 
         public Task<BackfillDispatchResult> DispatchCandidatesAsync(int pageLimit, DateTimeOffset utcNow, int maximumCount, CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<bool> TryDispatchCandidateAsync(Guid channelId, int pageLimit, DateTimeOffset utcNow, CancellationToken cancellationToken) =>
             throw new NotSupportedException();
     }
 

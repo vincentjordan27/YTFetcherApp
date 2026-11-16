@@ -3,8 +3,8 @@ using YtFetcher.Core.BackfillRuns;
 namespace YtFetcher.Application.Abstractions.Services;
 
 /// <summary>
-/// Scheduling boundary for approved-channel backfill work. The adapter enqueues exactly one generic
-/// page job and contains no backfill rules.
+/// Scheduling boundary for approved-channel backfill work. The adapter enqueues exactly one generic page job
+/// and contains no backfill rules.
 /// </summary>
 public interface IBackfillScheduler
 {

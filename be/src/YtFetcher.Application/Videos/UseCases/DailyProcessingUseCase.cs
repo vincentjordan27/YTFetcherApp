@@ -2,6 +2,7 @@ using YtFetcher.Application.Abstractions.Repositories;
 using YtFetcher.Application.Quotas;
 using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Abstractions.UseCases;
+using YtFetcher.Application.Backfill;
 using YtFetcher.Application.Backfill.DTO.Result;
 using YtFetcher.Application.Quotas.DTO.Result;
 using YtFetcher.Application.Settings;
@@ -15,10 +16,8 @@ using YtFetcher.Core.Videos;
 namespace YtFetcher.Application.Videos.UseCases;
 
 /// <summary>
-/// The ordered daily processing phases: take durable ownership of the Pacific quota date (Phase 0 snapshots the
-/// first-page window), refresh statistics for existing ACTIVE videos (M7), monitor newly uploaded videos (M6),
-/// then complete the date and open the continuation gate only when both backfill buckets still have a positive
-/// remainder.
+/// Coordinates the daily quota window, existing-video statistics refresh, new-upload monitoring, and backfill
+/// continuation. It opens the continuation gate only when both backfill buckets still have a positive remainder.
 /// </summary>
 public sealed class DailyProcessingUseCase(
     IDailyQuotaRepository dailyQuotaRepository,
@@ -28,7 +27,8 @@ public sealed class DailyProcessingUseCase(
     INewUploadMonitorActivityLogger newUploadMonitorActivityLogger,
     IBackfillRepository backfillRepository,
     IGeneralSettingsProvider generalSettingsProvider,
-    IBackfillSchedulingUseCase backfillSchedulingUseCase,
+    IBackfillUseCase backfillUseCase,
+    IBackfillScheduler backfillScheduler,
     TimeProvider timeProvider) : IRunDailyProcessingUseCase
 {
     private const string MonitorResolveUploadsPlaylistOperation = "ResolveUploadsPlaylist";
@@ -49,7 +49,7 @@ public sealed class DailyProcessingUseCase(
         var quotaDateStartUtc = PacificQuotaWindow.GetQuotaDateStartUtc(quotaDate);
         var settings = await generalSettingsProvider.GetRequiredAsync(cancellationToken);
 
-        // Phase 0: initialize the date's first-page window before anything may reserve a provider unit.
+        // Initialize the date's first-page window before anything may reserve a provider unit.
         await dailyQuotaRepository.EnsureLedgerAsync(quotaDate, cancellationToken);
 
         var claimToken = Guid.NewGuid();
@@ -98,7 +98,7 @@ public sealed class DailyProcessingUseCase(
         var videosUnavailable = 0;
         var videoBatchStatsExhausted = false;
 
-        // Phase 1 (M7): refresh statistics only for videos already stored in the database. It consumes only the
+        // Refresh statistics only for videos already stored in the database. It consumes only the
         // Video Batch Stats bucket.
         while (true)
         {
@@ -218,7 +218,7 @@ public sealed class DailyProcessingUseCase(
             }
         }
 
-        // Phase 2 (M6): inspect the newest uploads page of every eligible channel. It is skipped when the Batch
+        // Inspect the newest uploads page of every eligible channel. It is skipped when the Batch
         // Stats bucket is already unavailable, because an unknown upload can only be ingested by spending that
         // same bucket, so spending more Queries could not produce an ingestible result.
         var monitor = videoBatchStatsExhausted
@@ -236,7 +236,7 @@ public sealed class DailyProcessingUseCase(
             return DailyProcessingResult.NoOp(quotaDate, DailyProcessingOutcome.OwnershipLost);
         }
 
-        // Phase 3: complete the date and decide the gate from the live remainders in one owner-only statement.
+        // Complete the date and decide the gate from the live remainders in one owner-only statement.
         var finalization = await dailyQuotaRepository.FinalizeDailyProcessingAsync(
             quotaDate,
             claimToken,
@@ -277,32 +277,82 @@ public sealed class DailyProcessingUseCase(
             totalBound,
             cancellationToken);
 
-        foreach (var channelId in recovery.RecoveredChannelIds)
-        {
-            await backfillSchedulingUseCase.ScheduleAsync(channelId, BackfillTriggerSource.RECOVERY, cancellationToken);
-        }
-
         // Recovered and abandoned rows both return to the pending queue, so they count against the same bound.
         var remainingForFreshDispatch = Math.Max(
             0,
             totalBound - recovery.RecoveredChannelIds.Count - recovery.AbandonedRunCount);
 
-        if (remainingForFreshDispatch < 1)
-        {
-            return BuildResult(quotaDate, batchesSucceeded, videosUpdated, videosUnavailable, monitor, ledger,
-                queriesExhausted, batchExhausted, gateOpened: true,
-                recovery.RecoveredChannelIds.Count, recovery.AbandonedRunCount, 0);
-        }
+        var dispatch = remainingForFreshDispatch < 1
+            ? new BackfillDispatchResult([])
+            : await backfillRepository.DispatchCandidatesAsync(
+                settings.BackfillPageLimit,
+                utcNow,
+                remainingForFreshDispatch,
+                cancellationToken);
 
-        var dispatch = await backfillRepository.DispatchCandidatesAsync(
-            settings.BackfillPageLimit,
-            utcNow,
-            remainingForFreshDispatch,
-            cancellationToken);
+        var roster = recovery.RecoveredChannelIds
+            .Select(channelId => new BackfillRoundEntry(channelId, BackfillTriggerSource.RECOVERY))
+            .Concat(dispatch.DispatchedChannelIds.Select(channelId =>
+                new BackfillRoundEntry(channelId, BackfillTriggerSource.DAILY_PUMP)))
+            .ToList();
 
-        foreach (var channelId in dispatch.DispatchedChannelIds)
+        var maximumPageAttempts = Math.Min(
+            finalization.QueriesRemainder,
+            finalization.VideoBatchStatsRemainder);
+        var pageAttempts = 0;
+        var firstPass = true;
+
+        while (roster.Count > 0 && pageAttempts < maximumPageAttempts)
         {
-            await backfillSchedulingUseCase.ScheduleAsync(channelId, BackfillTriggerSource.DAILY_PUMP, cancellationToken);
+            var nextRound = new List<BackfillRoundEntry>();
+
+            foreach (var entry in roster)
+            {
+                if (pageAttempts >= maximumPageAttempts)
+                {
+                    break;
+                }
+
+                if (!firstPass && !await backfillRepository.TryDispatchCandidateAsync(
+                        entry.ChannelId,
+                        settings.BackfillPageLimit,
+                        timeProvider.GetUtcNow(),
+                        cancellationToken))
+                {
+                    continue;
+                }
+
+                BackfillPageExecutionResult outcome;
+                try
+                {
+                    outcome = await backfillUseCase.RunPageAsync(
+                        entry.ChannelId,
+                        entry.TriggerSource,
+                        cancellationToken);
+                }
+                catch (BackfillRetryRequestedException)
+                {
+                    backfillScheduler.EnqueuePage(entry.ChannelId, entry.TriggerSource);
+                    continue;
+                }
+
+                pageAttempts++;
+
+                if (outcome.QuotaLimited)
+                {
+                    roster.Clear();
+                    nextRound.Clear();
+                    break;
+                }
+
+                if (outcome.ShouldContinue)
+                {
+                    nextRound.Add(entry with { TriggerSource = BackfillTriggerSource.DAILY_PUMP });
+                }
+            }
+
+            roster = nextRound;
+            firstPass = false;
         }
 
         return BuildResult(quotaDate, batchesSucceeded, videosUpdated, videosUnavailable, monitor, ledger,
@@ -310,8 +360,10 @@ public sealed class DailyProcessingUseCase(
             recovery.RecoveredChannelIds.Count, recovery.AbandonedRunCount, dispatch.DispatchedChannelIds.Count);
     }
 
+    private sealed record BackfillRoundEntry(Guid ChannelId, BackfillTriggerSource TriggerSource);
+
     /// <summary>
-    /// M6 monitoring: reads the newest uploads page of every eligible channel in deterministic order, reserves a
+    /// Reads the newest uploads page of every eligible channel in deterministic order, reserves a
     /// Queries unit before each playlist request and a Video Batch Stats unit before each unknown-upload lookup,
     /// and advances the channel's success marker only after the page has persisted. A provider limit stops the
     /// phase and records only the matching bucket marker; a non-quota provider or persistence failure fails the
@@ -565,7 +617,7 @@ public sealed class DailyProcessingUseCase(
 
             if (!persisted.OwnershipRetained)
             {
-                // Same expected stale-owner case as M7: the run stops and the outer owned run maps it to a no-op.
+                // A stale owner stops here and the outer owned run maps it to a no-op.
                 return OwnershipStopped();
             }
 
@@ -682,7 +734,7 @@ public sealed class DailyProcessingUseCase(
         int KnownVideosSkipped,
         int OtherVideosSkipped)
     {
-        /// <summary>M6 was skipped because the Batch Stats bucket was already unavailable for this date.</summary>
+        /// <summary>Upload monitoring was skipped because the Batch Stats bucket was already unavailable for this date.</summary>
         public static MonitorPhaseOutcome Skipped => new(false, false, true, 0, 0, 0, 0, 0);
     }
 }

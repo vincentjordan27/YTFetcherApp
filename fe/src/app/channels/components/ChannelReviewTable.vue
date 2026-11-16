@@ -20,7 +20,7 @@ const props = withDefaults(
   defineProps<{
     variant: ChannelReviewVariant
     rows: readonly ChannelReviewRow[]
-    expandedEvidenceId?: string | null
+    expandedEvidenceIds?: ReadonlySet<string>
     state?: ChannelTableState
     stateMessage?: string
     evidence?: ChannelEvidenceState
@@ -30,7 +30,7 @@ const props = withDefaults(
     sort?: PendingChannelSort
   }>(),
   {
-    expandedEvidenceId: null,
+    expandedEvidenceIds: () => new Set<string>(),
     state: 'ready',
     stateMessage: '',
     evidence: undefined,
@@ -216,7 +216,7 @@ function formatSubscriberCount(value: number | null | undefined): string {
           class="channel-review-table__row"
           :class="{
             'channel-review-table__row--expandable': variant === 'pending' || (variant === 'rejected' && channel.hasRejectionReason),
-            'channel-review-table__row--expanded': expandedEvidenceId === channel.id,
+            'channel-review-table__row--expanded': expandedEvidenceIds.has(channel.id),
             'channel-review-table__row--selected': isSelected(channel.id),
           }"
           @click="variant === 'pending' ? emit('toggle-evidence', channel.id) : variant === 'rejected' && channel.hasRejectionReason && emit('open-rejection-reason', channel)"
@@ -234,14 +234,14 @@ function formatSubscriberCount(value: number | null | undefined): string {
             <button
               type="button"
               class="channel-review-table__disclosure"
-              :aria-expanded="expandedEvidenceId === channel.id"
+              :aria-expanded="expandedEvidenceIds.has(channel.id)"
               :aria-controls="`evidence-${channel.id}`"
-              :title="expandedEvidenceId === channel.id ? 'Collapse evidence' : 'Expand evidence'"
+              :title="expandedEvidenceIds.has(channel.id) ? 'Collapse evidence' : 'Expand evidence'"
               @click.stop="emit('toggle-evidence', channel.id)"
             >
               <svg class="channel-review-table__disclosure-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path
-                  v-if="expandedEvidenceId === channel.id"
+                  v-if="expandedEvidenceIds.has(channel.id)"
                   d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"
                 />
                 <path v-else d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
@@ -290,7 +290,7 @@ function formatSubscriberCount(value: number | null | undefined): string {
           <td v-else-if="variant === 'approved'" class="channel-review-table__date">{{ channel.approvedAt }}</td>
           <td v-else class="channel-review-table__date">{{ channel.rejectedAt }}</td>
           <td v-if="variant === 'pending'">
-            <ChannelEvidenceSummary :count="channel.evidenceCount ?? 0" :active="expandedEvidenceId === channel.id" />
+            <ChannelEvidenceSummary :count="channel.evidenceCount ?? 0" :active="expandedEvidenceIds.has(channel.id)" />
           </td>
           <template v-else-if="variant === 'approved'">
             <td>
@@ -335,12 +335,12 @@ function formatSubscriberCount(value: number | null | undefined): string {
           </td>
         </tr>
         <PendingChannelEvidence
-          v-if="variant === 'pending' && expandedEvidenceId === channel.id"
+          v-if="variant === 'pending' && expandedEvidenceIds.has(channel.id)"
           :channel-id="channel.id"
           :discovered-at="channel.discoveredAt"
           :evidence-count="channel.evidenceCount ?? 0"
           :items="evidence?.items[channel.id] ?? []"
-          :loading="evidence?.loadingId === channel.id"
+          :loading="evidence?.loadingIds.has(channel.id) === true"
           :failed="evidence?.failed[channel.id] === true"
         />
       </template>

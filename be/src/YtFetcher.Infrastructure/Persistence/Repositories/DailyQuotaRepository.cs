@@ -67,7 +67,7 @@ public sealed class DailyQuotaRepository(
         }
 
         // Create the date's row with the configured first-page cap snapshot. A row that already exists keeps
-        // its committed value, so a retry of Phase 0 never resets a limit another run already used.
+        // its committed value, so a retry never resets a limit another run already used.
         await dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"""
             INSERT INTO youtube_daily_quota_usage (

@@ -9,7 +9,7 @@ using YtFetcher.Infrastructure.Persistence;
 namespace YtFetcher.Infrastructure.Persistence.Repositories;
 
 /// <summary>
-/// PostgreSQL persistence for M6 new-upload monitoring. The candidate read is a plain soft-delete-filtered
+/// PostgreSQL persistence for new-upload monitoring. The candidate read is a plain soft-delete-filtered
 /// channel query; the per-channel write locks the daily ledger row and the approved channel inside one short
 /// transaction, re-reads the known video ids, and inserts through <c>ON CONFLICT DO NOTHING</c> so a race with
 /// backfill can never create a duplicate video or a second initial snapshot.
@@ -45,7 +45,7 @@ public sealed class NewUploadMonitoringRepository(
 
         var ids = youtubeVideoIds.ToArray();
 
-        // Soft-deleted rows deliberately count as known, exactly like M5: a deleted video is never revived and
+        // Soft-deleted rows deliberately count as known: a deleted video is never revived and
         // never receives a second initial snapshot.
         var known = await dbContext.Videos
             .AsNoTracking()

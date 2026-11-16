@@ -392,7 +392,7 @@ public sealed class ChannelRepository(YtFetcherDbContext dbContext) : IChannelRe
     /// one Queries unit, one Video Batch Stats unit, and one configured attempt slot. This is the only place a
     /// first-page pair is reserved, and the reservation is never refunded. A known exhaustion marker on either
     /// bucket refuses the claim, because that bucket must not make another provider call this Pacific date, and
-    /// the refusal writes no counter. Returns <see cref="ChannelApprovalStatus.WindowNotReady"/> before Phase 0
+    /// the refusal writes no counter. Returns <see cref="ChannelApprovalStatus.WindowNotReady"/> before the daily setup
     /// has committed the date's limit and <see cref="ChannelApprovalStatus.LimitReached"/> for either a full
     /// window or a known bucket exhaustion.
     /// </summary>

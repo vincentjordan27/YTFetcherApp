@@ -51,7 +51,7 @@ public sealed class BackfillUseCase(
     private const string RetryRequestedMessage =
         "The backfill attempt failed and was recorded. A retry is required.";
 
-    public async Task RunPageAsync(
+    public async Task<BackfillPageExecutionResult> RunPageAsync(
         Guid channelId,
         BackfillTriggerSource triggerSource,
         CancellationToken cancellationToken)
@@ -71,7 +71,7 @@ public sealed class BackfillUseCase(
 
         if (channel is null)
         {
-            return;
+            return BackfillPageExecutionResult.Stopped;
         }
 
         var isFirstPage = channel.BackfillPagesCompleted == 0;
@@ -87,7 +87,7 @@ public sealed class BackfillUseCase(
                 ValidatePageOperation,
                 MissingUploadsPlaylistFailureReason,
                 cancellationToken);
-            return;
+            return BackfillPageExecutionResult.Stopped;
         }
 
         if (!isFirstPage)
@@ -109,7 +109,7 @@ public sealed class BackfillUseCase(
                     QuotaLimitBucket.QUERIES,
                     timeProvider.GetUtcNow(),
                     cancellationToken);
-                return;
+                return BackfillPageExecutionResult.QuotaStopped;
             }
         }
 
@@ -126,7 +126,7 @@ public sealed class BackfillUseCase(
                 quotaDate,
                 QuotaLimitBucket.QUERIES,
                 cancellationToken);
-            return;
+            return BackfillPageExecutionResult.QuotaStopped;
         }
 
         if (page.Outcome != BackfillProviderOutcome.Succeeded)
@@ -138,7 +138,7 @@ public sealed class BackfillUseCase(
                 GetUploadsPageOperation,
                 page.FailureReason,
                 cancellationToken);
-            return;
+            return BackfillPageExecutionResult.Stopped;
         }
 
         // Malformed entries and duplicate ids are discarded while provider order is preserved.
@@ -173,7 +173,7 @@ public sealed class BackfillUseCase(
         // A page without usable ids persists completion/cursor without reserving or calling Batch Stats.
         if (uploadItems.Count == 0)
         {
-            await PersistPageOrRecordFailureAsync(
+            var persisted = await PersistPageOrRecordFailureAsync(
                 new BackfillPageResult(
                     channelId,
                     claimToken,
@@ -184,7 +184,7 @@ public sealed class BackfillUseCase(
                     isChannelComplete,
                     runStartedAt),
                 cancellationToken);
-            return;
+            return ToExecutionResult(persisted);
         }
 
         // A non-empty page needs the Batch Stats bucket. Page one already holds its approval-time unit; a
@@ -204,7 +204,7 @@ public sealed class BackfillUseCase(
                     QuotaLimitBucket.VIDEO_BATCH_STATS,
                     timeProvider.GetUtcNow(),
                     cancellationToken);
-                return;
+                return BackfillPageExecutionResult.QuotaStopped;
             }
         }
 
@@ -220,7 +220,7 @@ public sealed class BackfillUseCase(
                 quotaDate,
                 QuotaLimitBucket.VIDEO_BATCH_STATS,
                 cancellationToken);
-            return;
+            return BackfillPageExecutionResult.QuotaStopped;
         }
 
         if (stats.Outcome != BackfillProviderOutcome.Succeeded)
@@ -231,7 +231,7 @@ public sealed class BackfillUseCase(
                 GetVideoStatsOperation,
                 stats.FailureReason,
                 cancellationToken);
-            return;
+            return BackfillPageExecutionResult.Stopped;
         }
 
         var statsByVideoId = new Dictionary<string, VideoStatsItemResult>(StringComparer.Ordinal);
@@ -257,7 +257,7 @@ public sealed class BackfillUseCase(
             matchedStats.Add(statsItem);
         }
 
-        await PersistPageOrRecordFailureAsync(
+        var result = await PersistPageOrRecordFailureAsync(
             new BackfillPageResult(
                 channelId,
                 claimToken,
@@ -268,6 +268,8 @@ public sealed class BackfillUseCase(
                 isChannelComplete,
                 runStartedAt),
             cancellationToken);
+
+        return ToExecutionResult(result);
     }
 
     /// <summary>
@@ -382,13 +384,13 @@ public sealed class BackfillUseCase(
         throw new BackfillRetryRequestedException(RetryRequestedMessage);
     }
 
-    private async Task PersistPageOrRecordFailureAsync(
+    private async Task<BackfillPagePersistResult?> PersistPageOrRecordFailureAsync(
         BackfillPageResult page,
         CancellationToken cancellationToken)
     {
         try
         {
-            await backfillRepository.PersistPageAsync(page, cancellationToken);
+            return await backfillRepository.PersistPageAsync(page, cancellationToken);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -402,8 +404,14 @@ public sealed class BackfillUseCase(
                 PersistPageOperation,
                 PersistenceFailureReason,
                 cancellationToken);
+            return null;
         }
     }
+
+    private static BackfillPageExecutionResult ToExecutionResult(BackfillPagePersistResult? result) =>
+        result?.HasNextPage == true
+            ? BackfillPageExecutionResult.Continued
+            : BackfillPageExecutionResult.Stopped;
 
     /// <summary>
     /// Fixed readable sentence for the persisted failure reason. Raw gateway text is never persisted

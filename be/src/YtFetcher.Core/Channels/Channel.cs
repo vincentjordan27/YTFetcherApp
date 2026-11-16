@@ -414,7 +414,7 @@ public sealed class Channel : AuditableEntity
         BackfillCutoffAt ??= runStartedAt.AddDays(-BackfillHorizonDays);
 
     /// <summary>
-    /// Records a successful M6 new-upload check. The caller passes the instant captured at the start of the
+    /// Records a successful new-upload check. The caller passes the instant captured at the start of the
     /// monitoring phase, not a later clock reading, so an upload arriving while the phase is still running
     /// remains eligible for the next Pacific daily check. Only a fully persisted playlist page advances this
     /// marker; a provider or persistence failure leaves it unchanged.

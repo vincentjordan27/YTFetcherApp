@@ -5,8 +5,8 @@ using YtFetcher.Core.BackfillRuns;
 namespace YtFetcher.Infrastructure.Jobs;
 
 /// <summary>
-/// Hangfire adapter for the scheduling port. It contains no backfill rules: it enqueues exactly one
-/// generic page job for the channel and passes the trigger source through unchanged.
+/// Hangfire adapter for the scheduling port. It contains no backfill rules: it enqueues exactly one generic
+/// page job for the channel and passes the trigger source through unchanged.
 /// </summary>
 public sealed class HangfireBackfillScheduler(IBackgroundJobClient backgroundJobClient) : IBackfillScheduler
 {

@@ -327,7 +327,7 @@ public static class ChannelEndpoints
             statusCode: StatusCodes.Status429TooManyRequests,
             title: "Daily quota limit reached");
 
-    /// <summary>HTTP 503 until Phase 0 has initialized today's first-page window.</summary>
+    /// <summary>HTTP 503 until today's first-page window is initialized.</summary>
     private static IResult QuotaWindowNotReadyProblem() =>
         Results.Problem(
             detail: "The daily quota window has not started yet. Try again shortly.",

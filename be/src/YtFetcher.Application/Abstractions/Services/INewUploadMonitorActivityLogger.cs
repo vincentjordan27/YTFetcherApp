@@ -1,7 +1,7 @@
 namespace YtFetcher.Application.Abstractions.Services;
 
 /// <summary>
-/// Observability boundary for M6 new-upload monitoring. It carries only the failure events the operator needs:
+/// Observability boundary for new-upload monitoring. It carries only the failure events the operator needs:
 /// a provider or persistence failure with the channel id, a safe operation name, and a non-technical reason.
 /// A normal successful check is durable state plus the daily completion event, not an event.
 /// </summary>

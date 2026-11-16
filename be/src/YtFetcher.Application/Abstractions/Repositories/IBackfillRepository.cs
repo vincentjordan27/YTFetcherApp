@@ -115,4 +115,10 @@ public interface IBackfillRepository
         DateTimeOffset utcNow,
         int maximumCount,
         CancellationToken cancellationToken);
+
+    Task<bool> TryDispatchCandidateAsync(
+        Guid channelId,
+        int pageLimit,
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken);
 }

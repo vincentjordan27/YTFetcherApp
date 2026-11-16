@@ -2,6 +2,7 @@ using System.Reflection;
 using YtFetcher.Application.Abstractions.Repositories;
 using YtFetcher.Application.Abstractions.Services;
 using YtFetcher.Application.Abstractions.UseCases;
+using YtFetcher.Application.Backfill;
 using YtFetcher.Application.Backfill.DTO.Result;
 using YtFetcher.Application.Quotas.DTO.Result;
 using YtFetcher.Application.Settings;
@@ -148,7 +149,7 @@ public class DailyProcessingUseCaseTests
         Assert.Equal(0, harness.Quota.MarkQueriesExhaustedCount);
         Assert.Equal(0, harness.Backfill.RecoveryCount);
         Assert.Equal(0, harness.Backfill.DispatchCount);
-        Assert.Equal(0, harness.Scheduling.ScheduledCount);
+        Assert.Empty(harness.BackfillPages.Calls);
         Assert.Equal(0, harness.Gateway.UploadPageCallCount);
     }
 
@@ -169,7 +170,7 @@ public class DailyProcessingUseCaseTests
         Assert.Equal(0, harness.Quota.MarkQueriesExhaustedCount);
         Assert.Equal(0, harness.Backfill.RecoveryCount);
         Assert.Equal(0, harness.Backfill.DispatchCount);
-        Assert.Equal(0, harness.Scheduling.ScheduledCount);
+        Assert.Empty(harness.BackfillPages.Calls);
     }
 
     [Fact]
@@ -333,6 +334,77 @@ public class DailyProcessingUseCaseTests
         Assert.Equal(0, harness.Backfill.DispatchCount);
     }
 
+    [Fact]
+    public async Task Unlimited_backfill_processes_one_page_per_channel_per_round()
+    {
+        var harness = new Harness();
+        var first = Guid.NewGuid();
+        var second = Guid.NewGuid();
+        var third = Guid.NewGuid();
+        harness.Settings.BackfillPageLimit = 0;
+        harness.Backfill.DispatchedChannelIds = [first, second, third];
+        harness.BackfillPages.SetOutcomes(first, Continued(), Continued(), Stopped());
+        harness.BackfillPages.SetOutcomes(second, Continued(), Continued(), Stopped());
+        harness.BackfillPages.SetOutcomes(third, Continued(), Continued(), Stopped());
+
+        await harness.UseCase.RunAsync(CancellationToken.None);
+
+        Assert.Equal([first, second, third, first, second, third, first, second, third], harness.BackfillPages.Calls);
+    }
+
+    [Fact]
+    public async Task Positive_backfill_page_limit_stops_each_channel_at_that_page_count()
+    {
+        var harness = new Harness();
+        var first = Guid.NewGuid();
+        var second = Guid.NewGuid();
+        harness.Settings.BackfillPageLimit = 2;
+        harness.Backfill.DispatchedChannelIds = [first, second];
+        harness.BackfillPages.SetOutcomes(first, Continued(), Continued());
+        harness.BackfillPages.SetOutcomes(second, Continued(), Continued());
+
+        await harness.UseCase.RunAsync(CancellationToken.None);
+
+        Assert.Equal([first, second, first, second], harness.BackfillPages.Calls);
+    }
+
+    [Fact]
+    public async Task Quota_limit_stops_the_current_and_later_rounds()
+    {
+        var harness = new Harness();
+        var first = Guid.NewGuid();
+        var second = Guid.NewGuid();
+        var third = Guid.NewGuid();
+        harness.Settings.BackfillPageLimit = 0;
+        harness.Backfill.DispatchedChannelIds = [first, second, third];
+        harness.BackfillPages.SetOutcomes(first, Continued());
+        harness.BackfillPages.SetOutcomes(second, BackfillPageExecutionResult.QuotaStopped);
+
+        await harness.UseCase.RunAsync(CancellationToken.None);
+
+        Assert.Equal([first, second], harness.BackfillPages.Calls);
+    }
+
+    [Fact]
+    public async Task Retryable_page_failure_is_enqueued_and_does_not_stop_other_channels()
+    {
+        var harness = new Harness();
+        var failed = Guid.NewGuid();
+        var successful = Guid.NewGuid();
+        harness.Settings.BackfillPageLimit = 0;
+        harness.Backfill.DispatchedChannelIds = [failed, successful];
+        harness.BackfillPages.SetRetryableFailure(failed);
+        harness.BackfillPages.SetOutcomes(successful, Stopped());
+
+        await harness.UseCase.RunAsync(CancellationToken.None);
+
+        Assert.Equal([failed, successful], harness.BackfillPages.Calls);
+        Assert.Equal([failed], harness.Scheduler.Calls);
+    }
+
+    private static BackfillPageExecutionResult Continued() => BackfillPageExecutionResult.Continued;
+    private static BackfillPageExecutionResult Stopped() => BackfillPageExecutionResult.Stopped;
+
     private static void AssertOrder(List<string> order, params string[] expectedInOrder)
     {
         var previousIndex = -1;
@@ -388,8 +460,9 @@ public class DailyProcessingUseCaseTests
                 Monitoring,
                 new FakeMonitorLogger(),
                 Backfill,
-                new FakeGeneralSettingsProvider(),
-                Scheduling,
+                Settings,
+                BackfillPages,
+                Scheduler,
                 new FixedTimeProvider(Now));
         }
 
@@ -405,7 +478,11 @@ public class DailyProcessingUseCaseTests
 
         public FakeBackfillRepository Backfill { get; } = new();
 
-        public RecordingSchedulingUseCase Scheduling { get; } = new();
+        public FakeGeneralSettingsProvider Settings { get; } = new();
+
+        public RecordingBackfillUseCase BackfillPages { get; } = new();
+
+        public RecordingBackfillScheduler Scheduler { get; } = new();
 
         public IRunDailyProcessingUseCase UseCase { get; }
     }
@@ -417,10 +494,12 @@ public class DailyProcessingUseCaseTests
 
     private sealed class FakeGeneralSettingsProvider : IGeneralSettingsProvider
     {
+        public int BackfillPageLimit { get; set; } = 3;
+
         public Task<GeneralSettingsSnapshot> GetRequiredAsync(CancellationToken cancellationToken) =>
             Task.FromResult(GeneralSettingsSnapshot.Default with
             {
-                BackfillPageLimit = 3
+                BackfillPageLimit = BackfillPageLimit
             });
     }
 
@@ -648,7 +727,25 @@ public class DailyProcessingUseCaseTests
         {
             DispatchCount++;
             ReceivedDispatchMaximumCount = maximumCount;
+            foreach (var channelId in DispatchedChannelIds)
+            {
+                dispatchedPages[channelId] = 1;
+            }
             return Task.FromResult(new BackfillDispatchResult(DispatchedChannelIds));
+        }
+
+        private readonly Dictionary<Guid, int> dispatchedPages = [];
+
+        public Task<bool> TryDispatchCandidateAsync(Guid channelId, int pageLimit, DateTimeOffset utcNow, CancellationToken cancellationToken)
+        {
+            var completedPages = dispatchedPages.GetValueOrDefault(channelId);
+            if (pageLimit > 0 && completedPages >= pageLimit)
+            {
+                return Task.FromResult(false);
+            }
+
+            dispatchedPages[channelId] = completedPages + 1;
+            return Task.FromResult(true);
         }
 
         public Task<Channel?> TryClaimPageAsync(Guid channelId, Guid claimToken, DateOnly quotaDate, BackfillTriggerSource triggerSource, DateTimeOffset utcNow, CancellationToken cancellationToken) => throw new NotSupportedException();
@@ -658,14 +755,37 @@ public class DailyProcessingUseCaseTests
         public Task<BackfillFailureResult?> RecordFailureAsync(Guid channelId, Guid claimToken, string failureReason, DateTimeOffset utcNow, CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
-    private sealed class RecordingSchedulingUseCase : IBackfillSchedulingUseCase
+    private sealed class RecordingBackfillUseCase : IBackfillUseCase
     {
-        public int ScheduledCount { get; private set; }
+        private readonly Dictionary<Guid, Queue<BackfillPageExecutionResult>> outcomes = [];
+        private readonly HashSet<Guid> retryableFailures = [];
 
-        public Task ScheduleAsync(Guid channelId, BackfillTriggerSource triggerSource, CancellationToken cancellationToken)
+        public List<Guid> Calls { get; } = [];
+
+        public void SetOutcomes(Guid channelId, params BackfillPageExecutionResult[] values) =>
+            outcomes[channelId] = new Queue<BackfillPageExecutionResult>(values);
+
+        public void SetRetryableFailure(Guid channelId) => retryableFailures.Add(channelId);
+
+        public Task<BackfillPageExecutionResult> RunPageAsync(Guid channelId, BackfillTriggerSource triggerSource, CancellationToken cancellationToken)
         {
-            ScheduledCount++;
-            return Task.CompletedTask;
+            Calls.Add(channelId);
+            if (retryableFailures.Remove(channelId))
+            {
+                throw new BackfillRetryRequestedException("retry");
+            }
+
+            var result = outcomes.TryGetValue(channelId, out var queued) && queued.Count > 0
+                ? queued.Dequeue()
+                : BackfillPageExecutionResult.Stopped;
+            return Task.FromResult(result);
         }
+    }
+
+    private sealed class RecordingBackfillScheduler : IBackfillScheduler
+    {
+        public List<Guid> Calls { get; } = [];
+
+        public void EnqueuePage(Guid channelId, BackfillTriggerSource triggerSource) => Calls.Add(channelId);
     }
 }

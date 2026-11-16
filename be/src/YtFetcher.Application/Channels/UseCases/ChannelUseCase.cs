@@ -575,7 +575,7 @@ public sealed class ChannelUseCase(
             null,
             "YouTube request quota is exhausted for today. Try again after the next quota reset.");
 
-    /// <summary>HTTP 503: Phase 0 has not initialized today's first-page window yet.</summary>
+    /// <summary>HTTP 503: today's first-page window is not initialized yet.</summary>
     private static ChannelMutationResponse QuotaWindowNotReady() =>
         new(
             ChannelMutationStatus.QuotaWindowNotReady,

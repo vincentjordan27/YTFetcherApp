@@ -4,7 +4,7 @@ using YtFetcher.Core.Channels;
 namespace YtFetcher.Application.Abstractions.Repositories;
 
 /// <summary>
-/// Persistence boundary for M6 new-upload monitoring. The candidate read returns Core channels only; the
+/// Persistence boundary for new-upload monitoring. The candidate read returns Core channels only; the
 /// per-channel write re-reads the daily owner, the active channel, and the known video ids inside one short
 /// Infrastructure transaction, so a page that raced with another flow can never insert a duplicate video or
 /// a second initial snapshot.
@@ -22,7 +22,7 @@ public interface INewUploadMonitoringRepository
 
     /// <summary>
     /// Returns the subset of <paramref name="youtubeVideoIds"/> that already exist in <c>videos</c>. Soft-deleted
-    /// rows count as known, exactly like M5, so a deleted video is never revived or given a second snapshot.
+    /// rows count as known, so a deleted video is never revived or given a second snapshot.
     /// </summary>
     Task<IReadOnlySet<string>> GetKnownYoutubeVideoIdsAsync(
         IReadOnlyCollection<string> youtubeVideoIds,

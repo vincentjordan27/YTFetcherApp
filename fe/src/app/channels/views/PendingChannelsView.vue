@@ -19,7 +19,7 @@ const {
   pagination,
   tableState,
   evidenceState,
-  expandedEvidenceId,
+  expandedEvidenceIds,
   activeDialog,
   selectedChannel,
   rejectReason,
@@ -64,7 +64,7 @@ const {
         :search-query="searchInput"
         search-label="Filter by name or channel ID"
         show-add-channel
-        :show-collapse-evidence="Boolean(expandedEvidenceId)"
+        :show-collapse-evidence="expandedEvidenceIds.size > 0"
         :selected-count="selectedCount"
         show-approve-selection
         show-reject-selection
@@ -79,7 +79,7 @@ const {
           variant="pending"
           :rows="rows"
           :sort="sort"
-          :expanded-evidence-id="expandedEvidenceId"
+          :expanded-evidence-ids="expandedEvidenceIds"
           :state="tableState.state"
           :state-message="tableState.message"
           :evidence="evidenceState"

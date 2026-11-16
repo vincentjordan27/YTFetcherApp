@@ -292,7 +292,7 @@ public sealed class BackfillRepository(
                 videosInserted,
                 videosSkipped,
                 channel.BackfillStatus,
-                page.NextPageToken is not null);
+                channel.BackfillStatus == BackfillStatus.PENDING);
         }
         catch
         {
@@ -494,6 +494,42 @@ public sealed class BackfillRepository(
         }
     }
 
+    public async Task<bool> TryDispatchCandidateAsync(
+        Guid channelId,
+        int pageLimit,
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        try
+        {
+            var channel = dbContext.Database.IsRelational()
+                ? await dbContext.Channels
+                    .FromSqlInterpolated($"SELECT * FROM channels WHERE id = {channelId} FOR UPDATE")
+                    .SingleOrDefaultAsync(cancellationToken)
+                : await dbContext.Channels.SingleOrDefaultAsync(candidate => candidate.Id == channelId, cancellationToken);
+
+            if (channel is null ||
+                !channel.IsPumpCandidate(pageLimit, utcNow) ||
+                !channel.TryBeginPumpScheduling(utcNow))
+            {
+                await transaction.RollbackAsync(CancellationToken.None);
+                return false;
+            }
+
+            channel.ModifiedByUserId = User.SystemUserId;
+            await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return true;
+        }
+        catch
+        {
+            await RollbackAndClearAsync(transaction);
+            throw;
+        }
+    }
+
     public async Task<bool> DeferForQuotaLimitAsync(
         Guid channelId,
         Guid claimToken,
@@ -550,10 +586,6 @@ public sealed class BackfillRepository(
                 run => run.ClaimToken == claimToken && run.StatusValue == nameof(BackfillRunStatus.RUNNING),
                 cancellationToken);
 
-    /// <summary>
-    /// Locks one non-deleted channel row for the duration of the surrounding transaction, so two
-    /// concurrent jobs cannot both claim it or overwrite each other's failure state.
-    /// </summary>
     /// <summary>
     /// Locks one non-deleted channel row for the duration of the surrounding transaction, so two
     /// concurrent jobs cannot both claim it or overwrite each other's failure state. The InMemory provider used

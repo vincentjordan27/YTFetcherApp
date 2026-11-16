@@ -25,7 +25,7 @@ export interface ChannelEvidenceView {
 
 export interface ChannelEvidenceState {
   readonly items: Readonly<Record<string, readonly ChannelEvidenceView[]>>
-  readonly loadingId: string | null
+  readonly loadingIds: ReadonlySet<string>
   readonly failed: Readonly<Record<string, boolean>>
 }
 

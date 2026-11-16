@@ -4,7 +4,7 @@ using YtFetcher.Application.Abstractions.Services;
 namespace YtFetcher.Infrastructure.Observability;
 
 /// <summary>
-/// Structured, secret-free operator events for M6 new-upload monitoring. Only a provider or persistence
+/// Structured, secret-free operator events for new-upload monitoring. Only a provider or persistence
 /// failure is an event; a normal successful channel check is durable state plus the daily completion summary.
 /// </summary>
 public sealed class NewUploadMonitorActivityLogger(ILogger<NewUploadMonitorActivityLogger> logger)

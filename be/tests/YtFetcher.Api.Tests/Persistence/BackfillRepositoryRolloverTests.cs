@@ -203,13 +203,115 @@ public class BackfillRepositoryRolloverTests
         Assert.Equal(0, after.VideoBatchStatsUnitsUsed);
     }
 
+    [Fact]
+    public async Task Unlimited_dispatch_can_schedule_an_existing_continuation()
+    {
+        await using var context = CreateContext();
+        var channel = AddChannel(context, firstPageQuotaDate: QuotaDate);
+        channel.BackfillPagesCompleted = 4;
+        channel.BackfillPageToken = "next-page";
+        await context.SaveChangesAsync();
+
+        var dispatched = await CreateRepository(context).TryDispatchCandidateAsync(
+            channel.Id,
+            pageLimit: 0,
+            Now,
+            CancellationToken.None);
+
+        Assert.True(dispatched);
+        var stored = await context.Channels.AsNoTracking().SingleAsync(entity => entity.Id == channel.Id);
+        Assert.Equal(BackfillStatus.SCHEDULING, stored.BackfillStatus);
+    }
+
+    [Fact]
+    public async Task Limited_dispatch_does_not_schedule_a_channel_at_its_page_limit()
+    {
+        await using var context = CreateContext();
+        var channel = AddChannel(context, firstPageQuotaDate: QuotaDate);
+        channel.BackfillPagesCompleted = 2;
+        channel.BackfillPageToken = "next-page";
+        await context.SaveChangesAsync();
+
+        var dispatched = await CreateRepository(context).TryDispatchCandidateAsync(
+            channel.Id,
+            pageLimit: 2,
+            Now,
+            CancellationToken.None);
+
+        Assert.False(dispatched);
+        var stored = await context.Channels.AsNoTracking().SingleAsync(entity => entity.Id == channel.Id);
+        Assert.Equal(BackfillStatus.PENDING, stored.BackfillStatus);
+    }
+
+    [Fact]
+    public async Task Dispatch_does_not_take_a_channel_with_a_live_claim()
+    {
+        await using var context = CreateContext();
+        var channel = AddChannel(context, firstPageQuotaDate: QuotaDate);
+        channel.BackfillStatus = BackfillStatus.RUNNING;
+        channel.BackfillClaimToken = Guid.NewGuid();
+        channel.BackfillClaimedAt = Now;
+        await context.SaveChangesAsync();
+
+        var dispatched = await CreateRepository(context).TryDispatchCandidateAsync(
+            channel.Id,
+            pageLimit: 0,
+            Now,
+            CancellationToken.None);
+
+        Assert.False(dispatched);
+    }
+
+    [Fact]
+    public async Task Approval_page_continuation_can_join_a_later_dispatch_round()
+    {
+        await using var context = CreateContext();
+        var channel = AddChannel(context, firstPageQuotaDate: QuotaDate);
+        await context.SaveChangesAsync();
+        var repository = CreateRepository(context);
+        var claimToken = Guid.NewGuid();
+
+        await repository.TryClaimPageAsync(
+            channel.Id,
+            claimToken,
+            QuotaDate,
+            BackfillTriggerSource.APPROVAL,
+            Now,
+            CancellationToken.None);
+        await repository.PersistPageAsync(
+            new BackfillPageResult(
+                channel.Id,
+                claimToken,
+                "UU-rollover",
+                [],
+                [],
+                "page-2",
+                IsChannelComplete: false,
+                RunStartedAt: Now),
+            CancellationToken.None);
+
+        var dispatched = await repository.TryDispatchCandidateAsync(
+            channel.Id,
+            pageLimit: 0,
+            Now.AddMinutes(1),
+            CancellationToken.None);
+
+        Assert.True(dispatched);
+    }
+
     private static YtFetcherDbContext CreateContext() =>
         new(new DbContextOptionsBuilder<YtFetcherDbContext>()
             .UseInMemoryDatabase($"yt-fetcher-rollover-{Guid.NewGuid():N}")
             .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning))
             .Options);
 
-    private static BackfillRepository CreateRepository(YtFetcherDbContext context) => new(context, TimeProvider.System);
+    private static BackfillRepository CreateRepository(YtFetcherDbContext context) =>
+        new(context, new FixedTimeProvider(Now));
+
+    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
 
     private static YouTubeDailyQuotaUsage AddLedger(
         YtFetcherDbContext context,

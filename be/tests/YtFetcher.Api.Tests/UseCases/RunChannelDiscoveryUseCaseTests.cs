@@ -58,6 +58,82 @@ public sealed class RunChannelDiscoveryUseCaseTests
     }
 
     [Fact]
+    public async Task Page_limit_two_processes_two_pages_per_keyword_in_round_robin_order()
+    {
+        var first = Keyword("first");
+        var second = Keyword("second");
+        var third = Keyword("third");
+        var repository = new FakeDiscoveryRepository([first, second, third]);
+        var gateway = new ScriptedGateway((keyword, token) =>
+        {
+            var page = token is null ? 1 : int.Parse(token[^1..]);
+            return YouTubeDiscoverySearchResult.Completed([], 0, $"{keyword}-{page + 1}");
+        });
+
+        await CreateUseCase(repository, gateway, new FakeDailyQuotaRepository(), pageLimit: 2)
+            .RunAsync(CancellationToken.None);
+
+        Assert.Equal(
+            [
+                new SearchCall("first", null),
+                new SearchCall("second", null),
+                new SearchCall("third", null),
+                new SearchCall("first", "first-2"),
+                new SearchCall("second", "second-2"),
+                new SearchCall("third", "third-2")
+            ],
+            gateway.Calls);
+    }
+
+    [Fact]
+    public async Task Unlimited_run_continues_past_two_pages_per_keyword_until_every_keyword_is_terminal()
+    {
+        var first = Keyword("first");
+        var second = Keyword("second");
+        var repository = new FakeDiscoveryRepository([first, second]);
+        var gateway = new ScriptedGateway((keyword, token) =>
+        {
+            var page = token is null ? 1 : int.Parse(token[^1..]);
+            return YouTubeDiscoverySearchResult.Completed([], 0, page == 3 ? null : $"{keyword}-{page + 1}");
+        });
+
+        await CreateUseCase(repository, gateway, new FakeDailyQuotaRepository(), pageLimit: 0)
+            .RunAsync(CancellationToken.None);
+
+        Assert.Equal(
+            [
+                new SearchCall("first", null), new SearchCall("second", null),
+                new SearchCall("first", "first-2"), new SearchCall("second", "second-2"),
+                new SearchCall("first", "first-3"), new SearchCall("second", "second-3")
+            ],
+            gateway.Calls);
+    }
+
+    [Fact]
+    public async Task Quota_exhaustion_mid_pass_stops_before_any_keyword_gets_a_second_page()
+    {
+        var first = Keyword("first");
+        var second = Keyword("second");
+        var third = Keyword("third");
+        var repository = new FakeDiscoveryRepository([first, second, third]);
+        var gateway = new ScriptedGateway((keyword, _) =>
+            YouTubeDiscoverySearchResult.Completed([], 0, $"{keyword}-2"));
+        var quota = new FakeDailyQuotaRepository(
+            [
+                QuotaReservationResult.Reserved,
+                QuotaReservationResult.Reserved,
+                QuotaReservationResult.NoRemainingCapacity
+            ]);
+
+        await CreateUseCase(repository, gateway, quota, pageLimit: 0)
+            .RunAsync(CancellationToken.None);
+
+        Assert.Equal(
+            [new SearchCall("first", null), new SearchCall("second", null)],
+            gateway.Calls);
+    }
+
+    [Fact]
     public async Task Keyword_completed_on_current_quota_date_is_skipped()
     {
         var completed = Keyword("completed");

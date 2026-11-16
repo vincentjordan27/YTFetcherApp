@@ -5,7 +5,7 @@ using YtFetcher.Core.Auditing;
 namespace YtFetcher.Core.Videos;
 
 /// <summary>
-/// One captured statistics point for a video. M5 writes exactly one initial snapshot per new video.
+/// One captured statistics point for a video. Each new video receives exactly one initial snapshot.
 /// </summary>
 [Table("video_snapshots")]
 public sealed class VideoSnapshot : AuditableEntity

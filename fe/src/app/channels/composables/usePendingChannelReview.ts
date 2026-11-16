@@ -43,10 +43,10 @@ export function usePendingChannelReview() {
   const totalCount = ref(0)
   const loading = ref(false)
   const requestFailed = ref(false)
-  const expandedEvidenceId = ref<string | null>(null)
+  const expandedEvidenceIds = ref<ReadonlySet<string>>(new Set())
   const evidenceItems = ref<Record<string, ChannelEvidenceView[]>>({})
   const evidenceFailed = ref<Record<string, boolean>>({})
-  const evidenceLoadingId = ref<string | null>(null)
+  const evidenceLoadingIds = ref<ReadonlySet<string>>(new Set())
   const activeDialog = ref<ChannelDialogKind | null>(null)
   const selectedChannel = ref<ChannelDialogTarget | null>(null)
   const rejectReason = ref('')
@@ -82,7 +82,7 @@ export function usePendingChannelReview() {
 
   const evidenceState = computed<ChannelEvidenceState>(() => ({
     items: evidenceItems.value,
-    loadingId: evidenceLoadingId.value,
+    loadingIds: evidenceLoadingIds.value,
     failed: evidenceFailed.value,
   }))
 
@@ -199,14 +199,14 @@ export function usePendingChannelReview() {
   }
 
   function toggleEvidence(channelId: string): void {
-    if (expandedEvidenceId.value === channelId) {
-      closeEvidence()
+    if (expandedEvidenceIds.value.has(channelId)) {
+      expandedEvidenceIds.value = new Set([...expandedEvidenceIds.value].filter(id => id !== channelId))
       return
     }
 
-    expandedEvidenceId.value = channelId
+    expandedEvidenceIds.value = new Set(expandedEvidenceIds.value).add(channelId)
 
-    if (evidenceItems.value[channelId] || evidenceLoadingId.value === channelId) {
+    if (evidenceItems.value[channelId] || evidenceLoadingIds.value.has(channelId)) {
       return
     }
 
@@ -214,12 +214,12 @@ export function usePendingChannelReview() {
   }
 
   function closeEvidence(): void {
-    expandedEvidenceId.value = null
+    expandedEvidenceIds.value = new Set()
   }
 
   async function loadEvidence(channelId: string): Promise<void> {
     const lifecycleId = evidenceLifecycleId
-    evidenceLoadingId.value = channelId
+    evidenceLoadingIds.value = new Set(evidenceLoadingIds.value).add(channelId)
     updateEvidenceFailure(channelId, false)
 
     try {
@@ -240,8 +240,8 @@ export function usePendingChannelReview() {
 
       updateEvidenceFailure(channelId, true)
     } finally {
-      if (lifecycleId === evidenceLifecycleId && evidenceLoadingId.value === channelId) {
-        evidenceLoadingId.value = null
+      if (lifecycleId === evidenceLifecycleId) {
+        evidenceLoadingIds.value = new Set([...evidenceLoadingIds.value].filter(id => id !== channelId))
       }
     }
   }
@@ -359,7 +359,7 @@ export function usePendingChannelReview() {
     pagination,
     tableState,
     evidenceState,
-    expandedEvidenceId,
+    expandedEvidenceIds,
     activeDialog,
     selectedChannel,
     rejectReason,

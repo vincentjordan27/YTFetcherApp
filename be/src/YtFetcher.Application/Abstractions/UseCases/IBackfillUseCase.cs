@@ -1,4 +1,5 @@
 using YtFetcher.Core.BackfillRuns;
+using YtFetcher.Application.Backfill.DTO.Result;
 
 namespace YtFetcher.Application.Abstractions.UseCases;
 
@@ -10,7 +11,7 @@ namespace YtFetcher.Application.Abstractions.UseCases;
 /// </summary>
 public interface IBackfillUseCase
 {
-    Task RunPageAsync(
+    Task<BackfillPageExecutionResult> RunPageAsync(
         Guid channelId,
         BackfillTriggerSource triggerSource,
         CancellationToken cancellationToken);

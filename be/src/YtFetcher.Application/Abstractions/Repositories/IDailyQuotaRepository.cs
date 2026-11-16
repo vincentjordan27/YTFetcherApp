@@ -18,7 +18,7 @@ public interface IDailyQuotaRepository
     Task<YouTubeDailyQuotaUsage?> GetForDateAsync(DateOnly quotaDate, CancellationToken cancellationToken);
 
     /// <summary>
-    /// Phase 0 of the daily run: creates the Pacific date's ledger row when missing and snapshots the
+    /// Creates the Pacific date's ledger row when missing and snapshots the
     /// configured first-page attempt cap into <c>first_page_attempt_limit</c>. Until this commits, no
     /// reservation is valid and approval/discovery/manual lookup must be refused rather than spend capacity.
     /// </summary>
@@ -62,7 +62,7 @@ public interface IDailyQuotaRepository
     /// Reserves one ordinary unit from the general Queries bucket, protecting every unclaimed first-page slot.
     /// When <paramref name="dailyProcessClaimToken"/> is supplied the reservation is additionally fenced to that
     /// daily owner; a non-matching or completed date returns <see cref="QuotaReservationResult.OwnershipLost"/>.
-    /// Discovery, manual lookup, and M5 continuations pass <c>null</c>.
+    /// Discovery, manual lookup, and backfill continuations pass <c>null</c>.
     /// </summary>
     Task<QuotaReservationResult> TryReserveQueriesUnitAsync(
         DateOnly quotaDate,
@@ -72,7 +72,8 @@ public interface IDailyQuotaRepository
     /// <summary>
     /// Reserves one ordinary unit from the independent Video Batch Stats bucket, protecting every unclaimed
     /// first-page slot. The optional daily-owner fence behaves exactly as in
-    /// <see cref="TryReserveQueriesUnitAsync"/>; M7 and M6 pass their claim token, M5 continuations pass
+    /// <see cref="TryReserveQueriesUnitAsync"/>; statistics refresh and upload monitoring pass their claim token,
+    /// while backfill continuations pass
     /// <c>null</c>.
     /// </summary>
     Task<QuotaReservationResult> TryReserveVideoBatchStatsUnitAsync(

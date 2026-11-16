@@ -50,9 +50,9 @@ async function save() {
       <section class="settings-dialog__section">
         <h3>Automation</h3>
         <div class="settings-dialog__grid">
-          <label>Discovery pages<input v-model.number="settings.discoveryMaxPagesPerKeywordPerRun" type="number" min="0" required><span>0 = no limit</span></label>
+          <label>Discovery pages<input v-model.number="settings.discoveryMaxPagesPerKeywordPerRun" type="number" min="0" required><span>0 = no page cap; rotates across keywords</span></label>
           <label>Daily approved channels<input v-model.number="settings.maxDailyApprovedChannels" type="number" min="1" required></label>
-          <label>Backfill page limit<input v-model.number="settings.backfillPageLimit" type="number" min="0" required><span>0 = no limit</span></label>
+          <label>Backfill page limit<input v-model.number="settings.backfillPageLimit" type="number" min="0" required><span>0 = no page cap; rotates across channels</span></label>
           <label>Backfill batch size<input v-model.number="settings.backfillDispatchBatchSize" type="number" min="1" required></label>
           <label>Minimum subscriber count<input :value="settings.minimumSubscriberCount ?? ''" type="number" min="0" placeholder="Disabled" @input="settings.minimumSubscriberCount = ($event.target as HTMLInputElement).value === '' ? null : Number(($event.target as HTMLInputElement).value)"><span>Leave empty to disable</span></label>
         </div>

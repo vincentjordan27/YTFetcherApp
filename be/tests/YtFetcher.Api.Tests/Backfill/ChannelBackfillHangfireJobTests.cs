@@ -2,13 +2,13 @@ using Hangfire;
 using YtFetcher.Core.BackfillRuns;
 using YtFetcher.Api.Tests.Channels;
 using YtFetcher.Application.Abstractions.UseCases;
+using YtFetcher.Application.Backfill.DTO.Result;
 using YtFetcher.Infrastructure.Jobs;
 
 namespace YtFetcher.Api.Tests.Backfill;
 
 /// <summary>
-/// The Hangfire adapter for one first-page backfill: retries are disabled, the use case is called
-/// exactly once, and an unexpected exception is not swallowed.
+/// The Hangfire adapter invokes one page and does not swallow failures.
 /// </summary>
 public class ChannelBackfillHangfireJobTests
 {
@@ -65,20 +65,27 @@ public class ChannelBackfillHangfireJobTests
         Assert.Equal(channelId, job.Args[0]);
     }
 
-    private sealed class FakeBackfillUseCase(Exception? exception = null) : IBackfillUseCase
+    private sealed class FakeBackfillUseCase(
+        Exception? exception = null,
+        BackfillPageExecutionResult? outcome = null) : IBackfillUseCase
     {
         public List<Guid> ReceivedChannelIds { get; } = [];
 
         public int CallCount => ReceivedChannelIds.Count;
 
-        public Task RunPageAsync(
+        public Task<BackfillPageExecutionResult> RunPageAsync(
             Guid channelId,
             BackfillTriggerSource triggerSource,
             CancellationToken cancellationToken)
         {
             ReceivedChannelIds.Add(channelId);
 
-            return exception is null ? Task.CompletedTask : Task.FromException(exception);
+            if (exception is not null)
+            {
+                return Task.FromException<BackfillPageExecutionResult>(exception);
+            }
+
+            return Task.FromResult(outcome ?? BackfillPageExecutionResult.Stopped);
         }
     }
 }
