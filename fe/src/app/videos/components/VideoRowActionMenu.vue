@@ -135,11 +135,11 @@ onBeforeUnmount(() => {
         <button v-if="props.markUnused" type="button" class="video-row-menu__item" role="menuitem" @click="selectMarkUnused">
           Save as unused reference
         </button>
-        <button v-if="props.skip" type="button" class="video-row-menu__item" role="menuitem" @click="selectSkip">
+        <button v-if="props.skip" type="button" class="video-row-menu__item video-row-menu__item--warning" role="menuitem" @click="selectSkip">
+          <svg class="video-row-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 9v4m0 4h.01M10.3 3.9 2.5 18a2 2 0 0 0 1.75 3h15.5A2 2 0 0 0 21.5 18L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+          </svg>
           Skip
-        </button>
-        <button type="button" class="video-row-menu__item" role="menuitem" @click="selectHistory">
-          History
         </button>
         <button
           v-if="props.referenceStatus === 'UNUSED' || props.referenceStatus === 'USED'"
@@ -157,6 +157,9 @@ onBeforeUnmount(() => {
           role="menuitem"
           @click="selectReferenceStatus('SKIPPED')"
         >
+          <svg class="video-row-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M12 9v4m0 4h.01M10.3 3.9 2.5 18a2 2 0 0 0 1.75 3h15.5A2 2 0 0 0 21.5 18L13.7 3.9a2 2 0 0 0-3.4 0Z" />
+          </svg>
           Skip
         </button>
         <button
@@ -168,6 +171,15 @@ onBeforeUnmount(() => {
         >
           Mark as unused
         </button>
+        <div v-if="props.markUnused || props.skip || props.referenceStatus" class="video-row-menu__divider" role="separator"></div>
+        <button type="button" class="video-row-menu__item video-row-menu__item--utility" role="menuitem" @click="selectHistory">
+          <svg class="video-row-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="12" cy="12" r="8" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          History
+        </button>
+        <div v-if="props.removable" class="video-row-menu__divider" role="separator"></div>
         <button
           v-if="props.removable"
           type="button"

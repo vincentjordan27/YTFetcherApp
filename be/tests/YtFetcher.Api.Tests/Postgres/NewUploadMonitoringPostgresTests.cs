@@ -113,6 +113,7 @@ public class NewUploadMonitoringPostgresTests : IAsyncLifetime
         var video = await dbContext.Videos.AsNoTracking().SingleAsync(entity => entity.YoutubeVideoId == "new-1");
         var snapshot = await dbContext.VideoSnapshots.AsNoTracking().SingleAsync(snapshot => snapshot.VideoId == video.Id);
         Assert.Equal(snapshot.CapturedAt, video.LastStatsFetchedAt);
+        Assert.Equal(VideoReferenceStatus.NONE, video.ReferenceStatus);
     }
 
     [PostgresProofFact]

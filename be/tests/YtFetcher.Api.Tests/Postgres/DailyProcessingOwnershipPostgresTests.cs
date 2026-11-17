@@ -211,6 +211,65 @@ public class DailyProcessingOwnershipPostgresTests : IAsyncLifetime
     }
 
     [PostgresProofFact]
+    public async Task Statistics_claim_reads_only_active_non_reference_videos_from_the_current_schema()
+    {
+        var channel = new Channel
+        {
+            Id = Guid.NewGuid(),
+            YoutubeChannelId = $"UC-{Guid.NewGuid():N}",
+            Name = "Statistics proof channel",
+            Status = ChannelStatus.APPROVED,
+            BackfillStatus = BackfillStatus.COMPLETED,
+            IsDeleted = false,
+            DiscoveredAt = Now,
+            CreatedAt = Now,
+            ModifiedAt = Now
+        };
+        var active = new Video
+        {
+            Id = Guid.NewGuid(),
+            YoutubeVideoId = "stats-active",
+            ChannelId = channel.Id,
+            Title = "Active video",
+            PublishedAt = Now.AddDays(-2),
+            DurationMillis = 30_000,
+            CurrentViews = 10,
+            CurrentLikes = 1,
+            IsDeleted = false,
+            CreatedAt = Now,
+            ModifiedAt = Now
+        };
+        var reference = new Video
+        {
+            Id = Guid.NewGuid(),
+            YoutubeVideoId = "stats-reference",
+            ChannelId = channel.Id,
+            Title = "Reference video",
+            PublishedAt = Now.AddDays(-2),
+            DurationMillis = 30_000,
+            CurrentViews = 10,
+            CurrentLikes = 1,
+            ReferenceStatus = VideoReferenceStatus.UNUSED,
+            TrackingStatus = VideoTrackingStatus.STOPPED,
+            IsDeleted = false,
+            CreatedAt = Now,
+            ModifiedAt = Now
+        };
+        dbContext.AddRange(channel, active, reference);
+        await dbContext.SaveChangesAsync();
+
+        var claimed = await CreateStatisticsRepository().ClaimDueBatchAsync(
+            Now.AddDays(-1),
+            Now,
+            Guid.NewGuid(),
+            10,
+            CancellationToken.None);
+
+        var candidate = Assert.Single(claimed);
+        Assert.Equal(active.Id, candidate.Id);
+    }
+
+    [PostgresProofFact]
     public async Task M7_persistence_discards_a_stale_daily_token_and_keeps_its_claims()
     {
         var (video, dailyToken, videoToken) = await SeedClaimedVideoAsync();

@@ -22,6 +22,24 @@ public class PostgresProofDatabaseSchemaScriptsTests
     }
 
     [Fact]
+    public void Persistence_repositories_do_not_query_dropped_reference_columns()
+    {
+        var migrationDirectory = Path.GetDirectoryName(PostgresProofDatabase.SchemaScriptPaths()[0])!;
+        var repositoriesDirectory = Path.Combine(
+            Directory.GetParent(migrationDirectory)!.FullName,
+            "src",
+            "YtFetcher.Infrastructure",
+            "Persistence",
+            "Repositories");
+        var source = string.Join(
+            Environment.NewLine,
+            Directory.EnumerateFiles(repositoriesDirectory, "*Repository.cs").Select(File.ReadAllText));
+
+        Assert.DoesNotContain("is_reference", source, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("is_reference_used", source, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void Schema_script_paths_start_with_the_baseline_and_include_every_migration_script()
     {
         var scripts = PostgresProofDatabase.SchemaScriptPaths();

@@ -54,7 +54,7 @@ public sealed class VideoStatisticsRepository(YtFetcherDbContext dbContext) : IV
             .FromSqlInterpolated($"""
                 SELECT * FROM videos
                 WHERE is_deleted = FALSE
-                  AND is_reference = FALSE
+                  AND reference_status = 'NONE'
                   AND tracking_status = 'ACTIVE'
                   AND (last_stats_fetched_at IS NULL OR last_stats_fetched_at < {quotaDateStartUtc})
                   AND stats_claim_token IS NULL

@@ -64,6 +64,13 @@
   cursor: pointer;
 }
 
+.video-row-menu__item-icon {
+  width: 15px;
+  height: 15px;
+  margin-right: 8px;
+  flex: 0 0 auto;
+}
+
 .video-row-menu__item:hover,
 .video-row-menu__item:focus-visible {
   background: #f2f2f2;
@@ -74,7 +81,26 @@
   color: #b3261e;
 }
 
+.video-row-menu__item--warning {
+  color: #8a4b08;
+}
+
+.video-row-menu__item--warning:hover,
+.video-row-menu__item--warning:focus-visible {
+  background: #fff3e0;
+}
+
+.video-row-menu__item--utility {
+  color: #606060;
+}
+
 .video-row-menu__item--danger:hover,
 .video-row-menu__item--danger:focus-visible {
   background: #fdeceb;
+}
+
+.video-row-menu__divider {
+  height: 1px;
+  margin: 4px 4px;
+  background: #e5e5e5;
 }

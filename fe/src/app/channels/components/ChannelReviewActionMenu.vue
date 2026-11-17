@@ -112,6 +112,9 @@ onBeforeUnmount(() => {
           role="menuitem"
           @click="approve"
         >
+          <svg class="channel-review-action-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m5 12 4 4L19 6" />
+          </svg>
           Approve
         </button>
         <button
@@ -121,6 +124,9 @@ onBeforeUnmount(() => {
           role="menuitem"
           @click="reject"
         >
+          <svg class="channel-review-action-menu__item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="m7 7 10 10M17 7 7 17" />
+          </svg>
           Reject
         </button>
       </div>
