@@ -616,7 +616,7 @@ public class ChannelEndpointTests
         channel.RejectionReason = "No longer a fit";
         channel.BackfillStatus = BackfillStatus.COMPLETED;
         channel.BackfillPagesCompleted = 3;
-        channel.BackfillCutoffAt = SeedTime.AddDays(-Channel.BackfillHorizonDays);
+        channel.BackfillCutoffAt = SeedTime.AddDays(-730);
         await SeedAsync(application, channel);
 
         var client = application.CreateClient();
@@ -634,7 +634,7 @@ public class ChannelEndpointTests
         Assert.Null(stored.RejectionReason);
         Assert.Equal(BackfillStatus.COMPLETED, stored.BackfillStatus);
         Assert.Equal(3, stored.BackfillPagesCompleted);
-        Assert.Equal(SeedTime.AddDays(-Channel.BackfillHorizonDays), stored.BackfillCutoffAt);
+        Assert.Equal(SeedTime.AddDays(-730), stored.BackfillCutoffAt);
     }
 
     [Fact]

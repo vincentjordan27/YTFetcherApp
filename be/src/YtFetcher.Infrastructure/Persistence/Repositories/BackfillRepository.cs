@@ -192,9 +192,6 @@ public sealed class BackfillRepository(
                 throw new InvalidOperationException("The backfill claim is no longer owned by this job.");
             }
 
-            // A frozen cutoff stays authoritative so a multi-day backfill cannot lose older videos.
-            var effectiveCutoff = channel.BackfillCutoffAt ?? page.RunStartedAt.AddDays(-Channel.BackfillHorizonDays);
-
             var uploadItemsById = page.UploadItems
                 .Where(item => item.PublishedAt is not null)
                 .GroupBy(item => item.YoutubeVideoId, StringComparer.Ordinal)
@@ -224,7 +221,6 @@ public sealed class BackfillRepository(
                 if (!uploadItemsById.TryGetValue(statsItem.YoutubeVideoId, out var uploadItem) ||
                     uploadItem.PublishedAt is not { } publishedAt ||
                     !Video.IsShortForm(statsItem.DurationMillis) ||
-                    publishedAt < effectiveCutoff ||
                     known.Contains(statsItem.YoutubeVideoId))
                 {
                     videosSkipped++;
@@ -264,8 +260,6 @@ public sealed class BackfillRepository(
             {
                 channel.UploadsPlaylistId = page.UploadsPlaylistId;
             }
-
-            channel.FreezeBackfillCutoff(page.RunStartedAt);
 
             // One domain mutation advances the committed-page count exactly once, releases the claim,
             // consumes the quota reservation, and either completes the channel or stores the next cursor.

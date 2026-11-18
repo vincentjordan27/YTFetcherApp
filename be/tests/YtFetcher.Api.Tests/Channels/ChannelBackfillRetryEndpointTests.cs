@@ -49,7 +49,7 @@ public class ChannelBackfillRetryEndpointTests
         // The retry must resume exactly the page that failed.
         Assert.Equal(ContinuationCursor, stored.BackfillPageToken);
         Assert.Equal(1, stored.BackfillPagesCompleted);
-        Assert.Equal(Now.AddDays(-Channel.BackfillHorizonDays), stored.BackfillCutoffAt);
+        Assert.Equal(Now.AddDays(-730), stored.BackfillCutoffAt);
     }
 
     [Theory]
@@ -139,7 +139,7 @@ public class ChannelBackfillRetryEndpointTests
             BackfillStatus = BackfillStatus.FAILED,
             BackfillPageToken = ContinuationCursor,
             BackfillPagesCompleted = 1,
-            BackfillCutoffAt = Now.AddDays(-Channel.BackfillHorizonDays),
+            BackfillCutoffAt = Now.AddDays(-730),
             BackfillFailureCount = Channel.BackfillFailureLimit,
             BackfillFailureReason = "Unable to retrieve uploads from YouTube. Try again later.",
             BackfillLastFailedAt = Now.AddMinutes(-30),

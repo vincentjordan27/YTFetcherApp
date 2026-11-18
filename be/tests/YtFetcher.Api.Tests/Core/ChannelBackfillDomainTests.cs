@@ -47,19 +47,6 @@ public class ChannelBackfillDomainTests
         Assert.Null(channel.BackfillClaimedAt);
     }
 
-    [Fact]
-    public void Cutoff_is_frozen_once_and_later_pages_reuse_it()
-    {
-        var channel = EligibleChannel();
-
-        channel.FreezeBackfillCutoff(Now);
-        var frozen = Now.AddDays(-730);
-        Assert.Equal(frozen, channel.BackfillCutoffAt);
-
-        channel.FreezeBackfillCutoff(Now.AddDays(3));
-        Assert.Equal(frozen, channel.BackfillCutoffAt);
-    }
-
     private static Channel EligibleChannel() => new()
     {
         Id = Guid.NewGuid(),

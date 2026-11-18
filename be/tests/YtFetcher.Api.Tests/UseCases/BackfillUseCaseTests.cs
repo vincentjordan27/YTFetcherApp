@@ -116,6 +116,23 @@ public class BackfillUseCaseTests
     }
 
     [Fact]
+    public async Task A_page_older_than_the_former_horizon_continues_when_youtube_has_another_page()
+    {
+        var channel = ClaimedChannel(pagesCompleted: 1, pageToken: "page-2");
+        var (useCase, _, _, _, _) = CreateUseCase(
+            channel,
+            page: UploadsPageResult.Succeeded([UploadItem("old-1", Now.AddDays(-731))], nextPageToken: "page-3"),
+            stats: VideoStatsBatchResult.Succeeded([StatsItem("old-1")]));
+
+        var outcome = await useCase.RunPageAsync(
+            channel.Id,
+            BackfillTriggerSource.DAILY_PUMP,
+            CancellationToken.None);
+
+        Assert.Equal(BackfillPageExecutionResult.Continued, outcome);
+    }
+
+    [Fact]
     public async Task A_page_at_the_configured_limit_stops_even_when_youtube_has_a_next_token()
     {
         var channel = ClaimedChannel(pagesCompleted: 2, pageToken: "page-3");
@@ -353,8 +370,8 @@ public class BackfillUseCaseTests
         ModifiedAt = Now
     };
 
-    private static UploadsPageItemResult UploadItem(string youtubeVideoId) =>
-        new(youtubeVideoId, $"Title {youtubeVideoId}", null, Now.AddDays(-2));
+    private static UploadsPageItemResult UploadItem(string youtubeVideoId, DateTimeOffset? publishedAt = null) =>
+        new(youtubeVideoId, $"Title {youtubeVideoId}", null, publishedAt ?? Now.AddDays(-2));
 
     private static VideoStatsItemResult StatsItem(string youtubeVideoId, long durationMillis = 30_000) =>
         new(youtubeVideoId, durationMillis, 1_000, 50);

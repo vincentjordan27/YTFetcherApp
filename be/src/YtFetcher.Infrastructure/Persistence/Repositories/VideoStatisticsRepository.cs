@@ -52,15 +52,18 @@ public sealed class VideoStatisticsRepository(YtFetcherDbContext dbContext) : IV
         // rows, and the transaction commits before the provider call, so no row lock ever crosses HTTP.
         var candidates = await dbContext.Videos
             .FromSqlInterpolated($"""
-                SELECT * FROM videos
-                WHERE is_deleted = FALSE
-                  AND reference_status = 'NONE'
-                  AND tracking_status = 'ACTIVE'
-                  AND (last_stats_fetched_at IS NULL OR last_stats_fetched_at < {quotaDateStartUtc})
-                  AND stats_claim_token IS NULL
-                ORDER BY last_stats_fetched_at NULLS FIRST, id
+                SELECT videos.* FROM videos
+                INNER JOIN channels ON channels.id = videos.channel_id
+                WHERE videos.is_deleted = FALSE
+                  AND videos.reference_status = 'NONE'
+                  AND videos.tracking_status = 'ACTIVE'
+                  AND channels.is_deleted = FALSE
+                  AND channels.status = 'APPROVED'
+                  AND (videos.last_stats_fetched_at IS NULL OR videos.last_stats_fetched_at < {quotaDateStartUtc})
+                  AND videos.stats_claim_token IS NULL
+                ORDER BY videos.last_stats_fetched_at NULLS FIRST, videos.id
                 LIMIT {batchSize}
-                FOR UPDATE SKIP LOCKED
+                FOR UPDATE OF videos SKIP LOCKED
                 """)
             .ToListAsync(cancellationToken);
 

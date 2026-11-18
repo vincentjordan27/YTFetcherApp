@@ -160,15 +160,9 @@ public sealed class BackfillUseCase(
             uploadItems = uploadItems.Take(YouTubeApiLimits.MaxPlaylistItemsPerPage).ToList();
         }
 
-        // The product boundary is the frozen cutoff, never the cursor: a page that walked past the horizon
-        // is the last page even when YouTube still offers a next token.
-        var effectiveCutoff = channel.BackfillCutoffAt ?? runStartedAt.AddDays(-Channel.BackfillHorizonDays);
-        var crossedCutoff = uploadItems.Any(
-            item => item.PublishedAt is { } publishedAt && publishedAt < effectiveCutoff);
-
         var pageLimit = settings.BackfillPageLimit;
         var reachedPageLimit = pageLimit > 0 && channel.BackfillPagesCompleted + 1 >= pageLimit;
-        var isChannelComplete = page.NextPageToken is null || crossedCutoff || reachedPageLimit;
+        var isChannelComplete = page.NextPageToken is null || reachedPageLimit;
 
         // A page without usable ids persists completion/cursor without reserving or calling Batch Stats.
         if (uploadItems.Count == 0)

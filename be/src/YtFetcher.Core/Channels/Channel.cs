@@ -146,9 +146,6 @@ public sealed class Channel : AuditableEntity
     /// <summary>How long a page claim stays valid before a later job may reclaim it.</summary>
     public static readonly TimeSpan BackfillClaimLifetime = TimeSpan.FromMinutes(15);
 
-    /// <summary>Video age horizon one backfill covers, in days.</summary>
-    public const int BackfillHorizonDays = 730;
-
     /// <summary>Consecutive failures after which automatic work stops selecting the channel.</summary>
     public const int BackfillFailureLimit = 3;
 
@@ -405,13 +402,6 @@ public sealed class Channel : AuditableEntity
         ModifiedAt = utcNow;
         return true;
     }
-
-    /// <summary>
-    /// Freezes the backfill horizon on the first successful page. Later pages keep the frozen value so
-    /// a multi-day backfill cannot slowly lose older in-scope videos.
-    /// </summary>
-    public void FreezeBackfillCutoff(DateTimeOffset runStartedAt) =>
-        BackfillCutoffAt ??= runStartedAt.AddDays(-BackfillHorizonDays);
 
     /// <summary>
     /// Records a successful new-upload check. The caller passes the instant captured at the start of the

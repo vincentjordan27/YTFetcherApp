@@ -74,6 +74,29 @@ public class BackfillPersistenceTests : IAsyncLifetime
     }
 
     [PostgresProofFact]
+    public async Task A_page_persists_a_video_older_than_the_former_backfill_horizon()
+    {
+        var (channel, claimToken) = await SeedClaimedChannelAsync();
+        var publishedAt = Now.AddDays(-731);
+
+        var result = await CreateRepository().PersistPageAsync(
+            new BackfillPageResult(
+                channel.Id,
+                claimToken,
+                "UU-proof",
+                [new UploadsPageItemResult("old-video", "Old video", null, publishedAt)],
+                [new VideoStatsItemResult("old-video", 30_000, 1_000, 50)],
+                NextPageToken: "page-2",
+                IsChannelComplete: false,
+                RunStartedAt: Now),
+            CancellationToken.None);
+
+        Assert.Equal(1, result.VideosInserted);
+        var video = await dbContext.Videos.AsNoTracking().SingleAsync(entity => entity.YoutubeVideoId == "old-video");
+        Assert.Equal(publishedAt, video.PublishedAt);
+    }
+
+    [PostgresProofFact]
     public async Task A_soft_deleted_video_is_not_revived_and_receives_no_initial_snapshot()
     {
         var (channel, claimToken) = await SeedClaimedChannelAsync();

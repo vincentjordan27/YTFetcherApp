@@ -255,7 +255,33 @@ public class DailyProcessingOwnershipPostgresTests : IAsyncLifetime
             CreatedAt = Now,
             ModifiedAt = Now
         };
-        dbContext.AddRange(channel, active, reference);
+        var rejectedChannel = new Channel
+        {
+            Id = Guid.NewGuid(),
+            YoutubeChannelId = $"UC-{Guid.NewGuid():N}",
+            Name = "Rejected statistics proof channel",
+            Status = ChannelStatus.REJECTED,
+            BackfillStatus = BackfillStatus.COMPLETED,
+            IsDeleted = false,
+            DiscoveredAt = Now,
+            CreatedAt = Now,
+            ModifiedAt = Now
+        };
+        var rejectedVideo = new Video
+        {
+            Id = Guid.NewGuid(),
+            YoutubeVideoId = "stats-rejected",
+            ChannelId = rejectedChannel.Id,
+            Title = "Rejected channel video",
+            PublishedAt = Now.AddDays(-2),
+            DurationMillis = 30_000,
+            CurrentViews = 10,
+            CurrentLikes = 1,
+            IsDeleted = false,
+            CreatedAt = Now,
+            ModifiedAt = Now
+        };
+        dbContext.AddRange(channel, active, reference, rejectedChannel, rejectedVideo);
         await dbContext.SaveChangesAsync();
 
         var claimed = await CreateStatisticsRepository().ClaimDueBatchAsync(

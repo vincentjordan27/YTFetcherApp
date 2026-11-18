@@ -136,15 +136,12 @@ public class ChannelBackfillPageLifecycleTests
         var claimToken = Guid.NewGuid();
         Assert.True(channel.TryClaimPage(claimToken, Now));
         var readyAt = channel.BackfillReadyAt;
-        channel.FreezeBackfillCutoff(Now);
-        var cutoff = channel.BackfillCutoffAt;
 
         Assert.True(channel.TryDeferBackfillForQuota(claimToken, Now.AddMinutes(5)));
 
         Assert.Equal(BackfillStatus.PENDING, channel.BackfillStatus);
         Assert.Equal(ContinuationCursor, channel.BackfillPageToken);
         Assert.Equal(1, channel.BackfillPagesCompleted);
-        Assert.Equal(cutoff, channel.BackfillCutoffAt);
 
         // A deferred row must remain a dispatchable pump candidate, so it takes the deferral instant as its
         // ready time instead of keeping the old one.
@@ -185,8 +182,6 @@ public class ChannelBackfillPageLifecycleTests
     public void Three_owned_failures_leave_the_channel_terminally_failed_with_its_page_state()
     {
         var channel = ContinuationChannel();
-        channel.FreezeBackfillCutoff(Now);
-        var cutoff = channel.BackfillCutoffAt;
 
         RecordFailures(channel, Channel.BackfillFailureLimit);
 
@@ -195,7 +190,6 @@ public class ChannelBackfillPageLifecycleTests
         Assert.Equal(UploadsFailureReason, channel.BackfillFailureReason);
         Assert.Equal(ContinuationCursor, channel.BackfillPageToken);
         Assert.Equal(1, channel.BackfillPagesCompleted);
-        Assert.Equal(cutoff, channel.BackfillCutoffAt);
         Assert.Null(channel.BackfillClaimToken);
         Assert.False(channel.IsPumpCandidate(pageLimit: 0, Now));
     }
@@ -204,8 +198,6 @@ public class ChannelBackfillPageLifecycleTests
     public void Operator_retry_resets_only_failure_metadata_and_keeps_the_page_state()
     {
         var channel = ContinuationChannel();
-        channel.FreezeBackfillCutoff(Now);
-        var cutoff = channel.BackfillCutoffAt;
         RecordFailures(channel, Channel.BackfillFailureLimit);
 
         Assert.True(channel.TryResetFailedBackfill(Now.AddHours(1), Guid.NewGuid()));
@@ -216,7 +208,6 @@ public class ChannelBackfillPageLifecycleTests
         Assert.Null(channel.BackfillLastFailedAt);
         Assert.Equal(ContinuationCursor, channel.BackfillPageToken);
         Assert.Equal(1, channel.BackfillPagesCompleted);
-        Assert.Equal(cutoff, channel.BackfillCutoffAt);
         Assert.Equal(Now.AddHours(1), channel.BackfillReadyAt);
         Assert.True(channel.IsPumpCandidate(pageLimit: 0, Now.AddHours(1)));
         Assert.False(channel.TryResetFailedBackfill(Now.AddHours(2), Guid.NewGuid()));
